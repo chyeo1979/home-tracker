@@ -205,7 +205,7 @@
   <div class="auth-card">
     <h1>🏡 Home Tracker</h1>
     <p>Sign in to manage your household items.</p>
-    <button class="google-btn" id="google-btn" onclick="signInWithGoogle()">
+    <button class="google-btn" id="google-btn">
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
       Continue with Google
     </button>
@@ -223,14 +223,14 @@
         <p>Track food freshness and household warranties.</p>
       </div>
       <div class="header-right">
-        <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()"><span id="theme-icon">🌙</span></button>
-        <button class="signout-btn" onclick="doSignOut()">Sign out</button>
+        <button class="theme-toggle" id="theme-toggle"><span id="theme-icon">🌙</span></button>
+        <button class="signout-btn" id="signout-btn">Sign out</button>
       </div>
     </div>
 
     <!-- Expiry banner -->
     <div class="expiry-banner" id="expiry-banner">
-      <button class="banner-dismiss" onclick="dismissBanner()">✕</button>
+      <button class="banner-dismiss" id="banner-dismiss">✕</button>
       <div class="banner-title" id="banner-title"></div>
       <div class="banner-lines" id="banner-lines"></div>
     </div>
@@ -243,16 +243,16 @@
 
     <div class="search-row">
       <span class="search-icon">🔍</span>
-      <input type="text" id="search-input" placeholder="Search items…" oninput="onSearch(this)" />
-      <button class="search-clear" id="search-clear" onclick="clearSearch()">✕</button>
+      <input type="text" id="search-input" placeholder="Search items…" id="search-input-field" />
+      <button class="search-clear" id="search-clear">✕</button>
     </div>
     <div class="filter-row">
-      <select id="filter-type" onchange="renderItems()">
+      <select id="filter-type">
         <option value="">All types</option>
         <option value="food">Food</option>
         <option value="household">Household</option>
       </select>
-      <select id="filter-status" onchange="renderItems()">
+      <select id="filter-status">
         <option value="">All statuses</option>
         <option value="ok">Good</option>
         <option value="soon">Expiring soon</option>
@@ -262,103 +262,103 @@
 
     <div class="items-list" id="items-list"><div class="loading-screen">Loading your items…</div></div>
 
-    <button class="fab" onclick="openAddModal()" title="Add item">＋</button>
-    <button class="history-btn" onclick="openHistoryModal()" title="Recently removed">🗑️</button>
+    <button class="fab" id="fab-add" title="Add item">＋</button>
+    <button class="history-btn" id="fab-history" title="Recently removed">🗑️</button>
   </div>
 </div>
 
 <!-- ADD MODAL -->
-<div class="modal-overlay" id="add-modal" onclick="closeAddModalOverlay(event)">
+<div class="modal-overlay" id="add-modal">
   <div class="modal">
     <div class="modal-header">
       <h2>Add item</h2>
-      <button class="modal-close" onclick="closeAddModal()">✕</button>
+      <button class="modal-close" id="add-modal-close">✕</button>
     </div>
     <div style="margin-bottom:1rem;">
       <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Item type</div>
       <div class="type-select">
-        <button class="type-btn selected" id="btn-food" onclick="selectType('food')"><span class="icon">🥦</span><span class="lbl">Food</span></button>
-        <button class="type-btn" id="btn-household" onclick="selectType('household')"><span class="icon">🏠</span><span class="lbl">Household item</span></button>
+        <button class="type-btn selected" id="btn-food"><span class="icon">🥦</span><span class="lbl">Food</span></button>
+        <button class="type-btn" id="btn-household"><span class="icon">🏠</span><span class="lbl">Household item</span></button>
       </div>
     </div>
     <div class="field"><label>Item name</label><input type="text" id="f-name" placeholder="e.g. Milk, Microwave…" /></div>
     <div class="row2">
       <div class="field date-field">
         <label>Purchase date</label>
-        <button class="date-input-btn" id="btn-purchase" onclick="toggleCal(event,'purchase')"><span id="display-purchase" class="placeholder">Select date</span><span class="cal-icon">📅</span></button>
+        <button class="date-input-btn" id="btn-purchase"><span id="display-purchase" class="placeholder">Select date</span><span class="cal-icon">📅</span></button>
         <div class="cal-popup" id="cal-purchase"></div>
       </div>
       <div class="field date-field">
         <label id="lbl-expiry">Expiry date</label>
-        <button class="date-input-btn" id="btn-expiry" onclick="toggleCal(event,'expiry')"><span id="display-expiry" class="placeholder">Select date</span><span class="cal-icon">📅</span></button>
+        <button class="date-input-btn" id="btn-expiry"><span id="display-expiry" class="placeholder">Select date</span><span class="cal-icon">📅</span></button>
         <div class="cal-popup" id="cal-expiry"></div>
       </div>
     </div>
     <div class="field">
       <label>Photos (up to 3)</label>
       <div class="photo-btns" id="add-photo-btns">
-        <div class="photo-btn" id="add-camera-btn"><div class="up-icon">📷</div><p>Take photo</p><input type="file" accept="image/*" capture="environment" onchange="handleAddPhoto(event)" /></div>
-        <div class="photo-btn" id="add-gallery-btn"><div class="up-icon">🖼️</div><p>Choose from gallery</p><input type="file" accept="image/*" onchange="handleAddPhoto(event)" /></div>
+        <div class="photo-btn" id="add-camera-btn"><div class="up-icon">📷</div><p>Take photo</p><input type="file" id="add-camera-input" accept="image/*" capture="environment" /></div>
+        <div class="photo-btn" id="add-gallery-btn"><div class="up-icon">🖼️</div><p>Choose from gallery</p><input type="file" id="add-gallery-input" accept="image/*" /></div>
       </div>
       <div class="photo-preview" id="photo-preview"></div>
     </div>
     <div class="upload-progress" id="add-progress"></div>
     <div class="modal-actions">
-      <button class="cancel-btn" onclick="closeAddModal()">Cancel</button>
-      <button class="save-btn" id="add-save-btn" onclick="addItem()">Add item</button>
+      <button class="cancel-btn" id="add-cancel-btn">Cancel</button>
+      <button class="save-btn" id="add-save-btn">Add item</button>
     </div>
   </div>
 </div>
 
 <!-- EDIT MODAL -->
-<div class="modal-overlay" id="edit-modal" onclick="closeModal(event)">
+<div class="modal-overlay" id="edit-modal">
   <div class="modal">
     <div class="modal-header">
       <h2>Edit item</h2>
-      <button class="modal-close" onclick="closeEditModal()">✕</button>
+      <button class="modal-close" id="edit-modal-close">✕</button>
     </div>
     <div style="margin-bottom:1rem;">
       <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Item type</div>
       <div class="type-select">
-        <button class="type-btn selected" id="edit-btn-food" onclick="editSelectType('food')"><span class="icon">🥦</span><span class="lbl">Food</span></button>
-        <button class="type-btn" id="edit-btn-household" onclick="editSelectType('household')"><span class="icon">🏠</span><span class="lbl">Household item</span></button>
+        <button class="type-btn selected" id="edit-btn-food"><span class="icon">🥦</span><span class="lbl">Food</span></button>
+        <button class="type-btn" id="edit-btn-household"><span class="icon">🏠</span><span class="lbl">Household item</span></button>
       </div>
     </div>
     <div class="field"><label>Item name</label><input type="text" id="edit-name" placeholder="Item name" /></div>
     <div class="row2">
       <div class="field date-field">
         <label>Purchase date</label>
-        <button class="date-input-btn" id="btn-edit-purchase" onclick="toggleCal(event,'edit-purchase')"><span id="display-edit-purchase" class="placeholder">Select date</span><span class="cal-icon">📅</span></button>
+        <button class="date-input-btn" id="btn-edit-purchase"><span id="display-edit-purchase" class="placeholder">Select date</span><span class="cal-icon">📅</span></button>
         <div class="cal-popup" id="cal-edit-purchase"></div>
       </div>
       <div class="field date-field">
         <label id="edit-lbl-expiry">Expiry date</label>
-        <button class="date-input-btn" id="btn-edit-expiry" onclick="toggleCal(event,'edit-expiry')"><span id="display-edit-expiry" class="placeholder">Select date</span><span class="cal-icon">📅</span></button>
+        <button class="date-input-btn" id="btn-edit-expiry"><span id="display-edit-expiry" class="placeholder">Select date</span><span class="cal-icon">📅</span></button>
         <div class="cal-popup" id="cal-edit-expiry"></div>
       </div>
     </div>
     <div class="field">
       <label>Photos (up to 3)</label>
       <div class="photo-btns" id="edit-photo-btns">
-        <div class="photo-btn" id="edit-camera-btn"><div class="up-icon">📷</div><p>Take photo</p><input type="file" accept="image/*" capture="environment" onchange="handleEditPhoto(event)" /></div>
-        <div class="photo-btn" id="edit-gallery-btn"><div class="up-icon">🖼️</div><p>Choose from gallery</p><input type="file" accept="image/*" onchange="handleEditPhoto(event)" /></div>
+        <div class="photo-btn" id="edit-camera-btn"><div class="up-icon">📷</div><p>Take photo</p><input type="file" id="edit-camera-input" accept="image/*" capture="environment" /></div>
+        <div class="photo-btn" id="edit-gallery-btn"><div class="up-icon">🖼️</div><p>Choose from gallery</p><input type="file" id="edit-gallery-input" accept="image/*" /></div>
       </div>
       <div class="photo-preview" id="edit-photo-preview"></div>
     </div>
     <div class="upload-progress" id="edit-progress"></div>
     <div class="modal-actions">
-      <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
-      <button class="save-btn" id="edit-save-btn" onclick="saveEdit()">Save changes</button>
+      <button class="cancel-btn" id="edit-cancel-btn">Cancel</button>
+      <button class="save-btn" id="edit-save-btn">Save changes</button>
     </div>
   </div>
 </div>
 
 <!-- HISTORY MODAL -->
-<div class="modal-overlay" id="history-modal" onclick="closeHistoryModalOverlay(event)">
+<div class="modal-overlay" id="history-modal">
   <div class="modal">
     <div class="modal-header">
       <h2>🗑️ Recently removed</h2>
-      <button class="modal-close" onclick="closeHistoryModal()">✕</button>
+      <button class="modal-close" id="history-modal-close">✕</button>
     </div>
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:1rem;">Items removed in the last 30 days.</p>
     <div id="history-list"></div>
@@ -366,9 +366,9 @@
 </div>
 
 <!-- Lightbox -->
-<div class="lightbox" id="lightbox" onclick="closeLightbox()">
-  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
-  <img id="lightbox-img" src="" alt="Full size" onclick="event.stopPropagation()" />
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightbox-close">✕</button>
+  <img id="lightbox-img" src="" alt="Full size" />
 </div>
 
 <div class="toast" id="toast"></div>
@@ -790,7 +790,7 @@
     renderItems();
   };
   window.clearSearch = function() {
-    searchQuery = ''; document.getElementById('search-input').value = '';
+    searchQuery = ''; document.getElementById('search-input-field').value = '';
     document.getElementById('search-clear').classList.remove('visible');
     renderItems();
   };
@@ -992,6 +992,62 @@
   // Init theme (dark by default)
   applyTheme(localStorage.getItem('hometracker-theme') !== 'light');
   setupCameraButtons();
+
+  // ── Attach all event listeners (module scope safe) ──
+  // Auth
+  document.getElementById('google-btn').addEventListener('click', signInWithGoogle);
+  document.getElementById('signout-btn').addEventListener('click', doSignOut);
+
+  // Theme
+  document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+
+  // FAB buttons
+  document.getElementById('fab-add').addEventListener('click', openAddModal);
+  document.getElementById('fab-history').addEventListener('click', openHistoryModal);
+
+  // Banner
+  document.getElementById('banner-dismiss').addEventListener('click', dismissBanner);
+
+  // Search
+  document.getElementById('search-input-field').addEventListener('input', function(){ onSearch(this); });
+  document.getElementById('search-clear').addEventListener('click', clearSearch);
+
+  // Filters
+  document.getElementById('filter-type').addEventListener('change', renderItems);
+  document.getElementById('filter-status').addEventListener('change', renderItems);
+
+  // Add modal
+  document.getElementById('add-modal-close').addEventListener('click', closeAddModal);
+  document.getElementById('add-cancel-btn').addEventListener('click', closeAddModal);
+  document.getElementById('add-save-btn').addEventListener('click', addItem);
+  document.getElementById('add-modal').addEventListener('click', function(e){ if(e.target===this) closeAddModal(); });
+  document.getElementById('btn-food').addEventListener('click', function(){ selectType('food'); });
+  document.getElementById('btn-household').addEventListener('click', function(){ selectType('household'); });
+  document.getElementById('btn-purchase').addEventListener('click', function(e){ toggleCal(e,'purchase'); });
+  document.getElementById('btn-expiry').addEventListener('click', function(e){ toggleCal(e,'expiry'); });
+  document.getElementById('add-camera-input').addEventListener('change', handleAddPhoto);
+  document.getElementById('add-gallery-input').addEventListener('change', handleAddPhoto);
+
+  // Edit modal
+  document.getElementById('edit-modal-close').addEventListener('click', closeEditModal);
+  document.getElementById('edit-cancel-btn').addEventListener('click', closeEditModal);
+  document.getElementById('edit-save-btn').addEventListener('click', saveEdit);
+  document.getElementById('edit-modal').addEventListener('click', function(e){ if(e.target===this) closeEditModal(); });
+  document.getElementById('edit-btn-food').addEventListener('click', function(){ editSelectType('food'); });
+  document.getElementById('edit-btn-household').addEventListener('click', function(){ editSelectType('household'); });
+  document.getElementById('btn-edit-purchase').addEventListener('click', function(e){ toggleCal(e,'edit-purchase'); });
+  document.getElementById('btn-edit-expiry').addEventListener('click', function(e){ toggleCal(e,'edit-expiry'); });
+  document.getElementById('edit-camera-input').addEventListener('change', handleEditPhoto);
+  document.getElementById('edit-gallery-input').addEventListener('change', handleEditPhoto);
+
+  // History modal
+  document.getElementById('history-modal-close').addEventListener('click', closeHistoryModal);
+  document.getElementById('history-modal').addEventListener('click', function(e){ if(e.target===this) closeHistoryModal(); });
+
+  // Lightbox
+  document.getElementById('lightbox').addEventListener('click', closeLightbox);
+  document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+  document.getElementById('lightbox-img').addEventListener('click', function(e){ e.stopPropagation(); });
 </script>
 </body>
 </html>
