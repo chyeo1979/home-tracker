@@ -469,7 +469,8 @@
 
       renderItems();
     } catch(e) {
-      document.getElementById('items-list').innerHTML = '<div class="empty"><div class="big">⚠️</div>Could not load items. Check your connection.</div>';
+      console.error('loadItems error:', e);
+      document.getElementById('items-list').innerHTML = '<div class="empty"><div class="big">⚠️</div>Error: ' + (e.message || e.code || 'Could not load items') + '</div>';
     }
   }
 
@@ -526,7 +527,8 @@
       renderItems();
       showToast('"' + name + '" added!');
     } catch(e) {
-      showToast('Error saving item. Please try again.');
+      console.error('addItem error:', e);
+      showToast('Error: ' + (e.message || e.code || 'Unknown error'));
       prog.textContent = '';
     } finally {
       btn.disabled = false; btn.textContent = 'Add item';
@@ -647,7 +649,8 @@
       renderItems();
       showToast('"' + name + '" updated!');
     } catch(e) {
-      showToast('Error saving. Please try again.');
+      console.error('saveEdit error:', e);
+      showToast('Error: ' + (e.message || e.code || 'Unknown error'));
       prog.textContent = '';
     } finally {
       btn.disabled = false; btn.textContent = 'Save changes';
