@@ -379,8 +379,7 @@
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, orderBy }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-  import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject }
-    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+
 
   const firebaseConfig = {
     apiKey: "AIzaSyAHa-R-1dOS-k422bW4WJewmgINszVWEEM",
@@ -394,7 +393,7 @@
   const app      = initializeApp(firebaseConfig);
   const auth     = getAuth(app);
   const db       = getFirestore(app);
-  const storage  = getStorage(app);
+
   const provider = new GoogleAuthProvider();
 
   /* ── Constants ── */
@@ -452,7 +451,15 @@
     try {
       const q = query(collection(db,'items'), where('uid','==',currentUser.uid), orderBy('createdAt','desc'));
       const snap = await getDocs(q);
-      items = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+      items = snap.docs.map(function(d) {
+        var data = Object.assign({ docId: d.id }, d.data());
+        // Load photos from localStorage
+        try {
+          var stored = localStorage.getItem('photos_' + d.id);
+          data.photoDataURLs = stored ? JSON.parse(stored) : [];
+        } catch(e) { data.photoDataURLs = []; }
+        return data;
+      });
 
       // Load deleted history from Firestore too
       const dq = query(collection(db,'deleted'), where('uid','==',currentUser.uid), orderBy('deletedAt','desc'));
@@ -466,16 +473,13 @@
     }
   }
 
-  /* ── Upload photo to Firebase Storage ── */
-  async function uploadPhoto(file, path) {
-    const storageRef = ref(storage, path);
-    await uploadBytes(storageRef, file);
-    return await getDownloadURL(storageRef);
-  }
-
-  async function deleteStoragePhoto(path) {
-    if (!path) return;
-    try { await deleteObject(ref(storage, path)); } catch(e) {}
+  /* ── Local photo helpers ── */
+  function readFileAsDataURL(file) {
+    return new Promise(function(resolve) {
+      var r = new FileReader();
+      r.onload = function(e) { resolve(e.target.result); };
+      r.readAsDataURL(file);
+    });
   }
 
   /* ── Add item ── */
@@ -492,15 +496,12 @@
     btn.disabled = true; btn.textContent = 'Saving…';
 
     try {
-      // Upload photos
-      const photoURLs = [];
-      const storagePaths = [];
+      // Convert photos to base64 locally
+      const photoDataURLs = [];
       for (let i = 0; i < addPhotos.length; i++) {
-        prog.textContent = 'Uploading photo ' + (i+1) + ' of ' + addPhotos.length + '…';
-        const path = 'photos/' + currentUser.uid + '/' + Date.now() + '_' + i + '_' + addPhotos[i].file.name;
-        const url  = await uploadPhoto(addPhotos[i].file, path);
-        photoURLs.push(url);
-        storagePaths.push(path);
+        prog.textContent = 'Processing photo ' + (i+1) + ' of ' + addPhotos.length + '…';
+        const dataURL = await readFileAsDataURL(addPhotos[i].file);
+        photoDataURLs.push(dataURL);
       }
 
       prog.textContent = 'Saving…';
@@ -508,13 +509,17 @@
         uid: currentUser.uid, name, type: currentType,
         purchase: cal['purchase'].selected,
         expiry:   cal['expiry'].selected,
-        photoURLs, storagePaths,
         createdAt: Date.now()
       });
 
+      // Store photos in localStorage keyed by docId
+      if (photoDataURLs.length) {
+        try { localStorage.setItem('photos_' + docRef.id, JSON.stringify(photoDataURLs)); } catch(e) { showToast('Photos too large for local storage — try smaller images.'); }
+      }
+
       items.unshift({ docId: docRef.id, uid: currentUser.uid, name, type: currentType,
         purchase: cal['purchase'].selected, expiry: cal['expiry'].selected,
-        photoURLs, storagePaths, createdAt: Date.now() });
+        photoDataURLs, createdAt: Date.now() });
 
       prog.textContent = '';
       closeAddModal();
@@ -535,6 +540,7 @@
     const item = items[idx];
     try {
       await deleteDoc(doc(db,'items',docId));
+      localStorage.removeItem('photos_' + docId);
       items.splice(idx, 1);
 
       // Archive to deleted collection (no photos)
@@ -568,9 +574,9 @@
       else { sp.textContent = 'Select date'; sp.classList.add('placeholder'); }
     });
 
-    // editPhotos = existing server photos + new local files
-    editPhotos = (it.photoURLs || []).map(function(url, i) {
-      return { url: url, storagePath: (it.storagePaths || [])[i] || null, file: null };
+    // editPhotos = existing local base64 photos
+    editPhotos = (it.photoDataURLs || []).map(function(url) {
+      return { url: url, file: null };
     });
     refreshEditPhotoPreview();
     setupCameraButtons();
@@ -601,30 +607,15 @@
     btn.disabled = true; btn.textContent = 'Saving…';
 
     try {
-      const finalURLs = [];
-      const finalPaths = [];
-
+      // Build final photo list (existing base64 + new files converted)
+      const finalDataURLs = [];
       for (let i = 0; i < editPhotos.length; i++) {
         const ep = editPhotos[i];
         if (ep.file) {
-          // New file to upload
-          prog.textContent = 'Uploading photo ' + (i+1) + '…';
-          const path = 'photos/' + currentUser.uid + '/' + Date.now() + '_' + i + '_' + ep.file.name;
-          const url  = await uploadPhoto(ep.file, path);
-          finalURLs.push(url);
-          finalPaths.push(path);
+          prog.textContent = 'Processing photo ' + (i+1) + '…';
+          finalDataURLs.push(await readFileAsDataURL(ep.file));
         } else {
-          // Existing photo — keep it
-          finalURLs.push(ep.url);
-          finalPaths.push(ep.storagePath);
-        }
-      }
-
-      // Delete photos that were removed
-      const it = items.find(function(i) { return i.docId === editingDocId; });
-      if (it && it.storagePaths) {
-        for (const oldPath of it.storagePaths) {
-          if (oldPath && !finalPaths.includes(oldPath)) await deleteStoragePhoto(oldPath);
+          finalDataURLs.push(ep.url); // existing base64
         }
       }
 
@@ -632,15 +623,23 @@
       await updateDoc(doc(db,'items',editingDocId), {
         name, type: editType,
         purchase: cal['edit-purchase'].selected,
-        expiry:   cal['edit-expiry'].selected,
-        photoURLs: finalURLs, storagePaths: finalPaths
+        expiry:   cal['edit-expiry'].selected
       });
+
+      // Update localStorage photos
+      try {
+        if (finalDataURLs.length) {
+          localStorage.setItem('photos_' + editingDocId, JSON.stringify(finalDataURLs));
+        } else {
+          localStorage.removeItem('photos_' + editingDocId);
+        }
+      } catch(e) { showToast('Photos too large for local storage — try smaller images.'); }
 
       const idx = items.findIndex(function(i) { return i.docId === editingDocId; });
       if (idx !== -1) {
         items[idx] = Object.assign({}, items[idx], { name, type: editType,
           purchase: cal['edit-purchase'].selected, expiry: cal['edit-expiry'].selected,
-          photoURLs: finalURLs, storagePaths: finalPaths });
+          photoDataURLs: finalDataURLs });
       }
 
       prog.textContent = '';
@@ -816,7 +815,7 @@
       const bc = st==='expired'?'badge-exp':st==='soon'?'badge-warn':'badge-ok';
       const dl = daysLabel(it.expiry);
       const expLbl = it.type==='food'?'Expiry':'Warranty expiry';
-      const photoList = it.photoURLs || [];
+      const photoList = it.photoDataURLs || [];
       const thumbsHtml = photoList.length
         ? '<div class="item-thumbs">' + photoList.map(function(p){ return '<img class="item-thumb" src="' + p + '" alt="' + it.name + '" data-src="' + p + '"/>'; }).join('') + '</div>'
         : '<div class="item-no-thumb">' + (it.type==='food'?'🥦':'🏠') + '</div>';
