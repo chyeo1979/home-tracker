@@ -377,7 +377,7 @@
   import { initializeApp }            from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, orderBy }
+  import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 
@@ -449,23 +449,27 @@
   /* ── Firestore ── */
   async function loadItems() {
     try {
-      const q = query(collection(db,'items'), where('uid','==',currentUser.uid), orderBy('createdAt','desc'));
+      const q = query(collection(db,'items'), where('uid','==',currentUser.uid));
       const snap = await getDocs(q);
       items = snap.docs.map(function(d) {
         var data = Object.assign({ docId: d.id }, d.data());
-        // Load photos from localStorage
         try {
           var stored = localStorage.getItem('photos_' + d.id);
           data.photoDataURLs = stored ? JSON.parse(stored) : [];
         } catch(e) { data.photoDataURLs = []; }
         return data;
       });
+      // Sort by createdAt descending in JS (no index needed)
+      items.sort(function(a,b){ return (b.createdAt||0) - (a.createdAt||0); });
 
       // Load deleted history from Firestore too
-      const dq = query(collection(db,'deleted'), where('uid','==',currentUser.uid), orderBy('deletedAt','desc'));
+      const dq = query(collection(db,'deleted'), where('uid','==',currentUser.uid));
       const dsnap = await getDocs(dq);
       const cutoff = Date.now() - 30*24*60*60*1000;
-      deletedItems = dsnap.docs.map(d => ({ docId: d.id, ...d.data() })).filter(i => i.deletedAt >= cutoff);
+      deletedItems = dsnap.docs.map(function(d){ return Object.assign({ docId: d.id }, d.data()); })
+        .filter(function(i){ return i.deletedAt >= cutoff; });
+      // Sort by deletedAt descending in JS
+      deletedItems.sort(function(a,b){ return (b.deletedAt||0) - (a.deletedAt||0); });
 
       renderItems();
     } catch(e) {
