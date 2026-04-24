@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #ffffff; --bg-secondary: #f5f5f3; --bg-tertiary: #eeede8;
+      --text-primary: #1a1a18; --text-secondary: #6b6b67;
+      --border-light: rgba(0,0,0,0.12); --border-mid: rgba(0,0,0,0.22);
+      --radius-md: 8px; --radius-lg: 12px;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --accent: #1D9E75; --accent-bg: #E1F5EE; --accent-dark: #0F6E56;
+    }
+    [data-theme="dark"] {
+        --bg-primary: #1e1e1c; --bg-secondary: #2a2a27; --bg-tertiary: #333330;
+        --text-primary: #f0efe8; --text-secondary: #9b9b95;
+        --border-light: rgba(255,255,255,0.1); --border-mid: rgba(255,255,255,0.2);
+        --accent-bg: #04342C; --accent-dark: #5DCAA5;
+    }
+
+    body { font-family: var(--font); background: var(--bg-tertiary); color: var(--text-primary); min-height: 100vh; padding: 2rem 1rem; }
+    .container { max-width: 680px; margin: 0 auto; }
+
+    .header { margin-bottom: 1.5rem; display: flex; align-items: flex-start; justify-content: space-between; }
+    .header-left h1 { font-size: 26px; font-weight: 600; }
+    .header-left p { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+    .theme-toggle { background: none; border: none; font-size: 22px; cursor: pointer; flex-shrink: 0; margin-top: 4px; padding: 4px; line-height: 1; opacity: 0.8; transition: opacity 0.15s; }
+    .theme-toggle:hover { opacity: 1; }
+
+    /* FAB */
+    .fab { position: fixed; bottom: 1.5rem; right: 1.5rem; width: 56px; height: 56px; border-radius: 50%; background: var(--text-primary); color: var(--bg-primary); border: none; font-size: 28px; line-height: 56px; text-align: center; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.2); z-index: 100; font-family: var(--font); transition: transform 0.15s, box-shadow 0.15s; padding: 0; }
+    .fab:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+
+    /* Add modal (reuses .modal-overlay / .modal) */
+    .form-card { background: var(--bg-primary); border: 0.5px solid var(--border-light); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.5rem; }
+    .form-card h2 { font-size: 15px; font-weight: 500; margin-bottom: 1rem; }
+
+    .field { margin-bottom: 1rem; }
+    .field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 5px; }
+    .field input[type="text"] { width: 100%; padding: 8px 10px; font-size: 14px; font-family: var(--font); border: 0.5px solid var(--border-mid); border-radius: var(--radius-md); background: var(--bg-primary); color: var(--text-primary); outline: none; transition: border-color 0.15s; }
+    .field input[type="text"]:focus { border-color: var(--text-primary); }
+
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .type-select { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+    .type-btn { padding: 12px; border: 0.5px solid var(--border-mid); border-radius: var(--radius-md); background: transparent; cursor: pointer; text-align: center; transition: all 0.15s; font-family: var(--font); color: var(--text-primary); }
+    .type-btn .icon { font-size: 22px; display: block; margin-bottom: 4px; }
+    .type-btn .lbl { font-size: 13px; color: var(--text-secondary); }
+    .type-btn.selected { border: 1.5px solid var(--accent); background: var(--accent-bg); }
+    .type-btn.selected .lbl { color: var(--accent-dark); }
+
+    /* Calendar */
+    .date-field { position: relative; }
+    .date-input-btn { width: 100%; padding: 8px 10px; font-size: 14px; font-family: var(--font); border: 0.5px solid var(--border-mid); border-radius: var(--radius-md); background: var(--bg-primary); color: var(--text-primary); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: border-color 0.15s; }
+    .date-input-btn:hover, .date-input-btn.open { border-color: var(--text-primary); }
+    .date-input-btn .cal-icon { font-size: 14px; opacity: 0.45; }
+    .date-input-btn .placeholder { color: var(--text-secondary); }
+    .cal-popup { display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 300; background: var(--bg-primary); border: 0.5px solid var(--border-mid); border-radius: var(--radius-lg); padding: 14px; width: 272px; box-shadow: 0 6px 24px rgba(0,0,0,0.14); }
+    .cal-popup.open { display: block; }
+    .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 4px; }
+    .cal-nav-btn { background: none; border: none; cursor: pointer; color: var(--text-primary); font-size: 18px; padding: 2px 8px; border-radius: var(--radius-md); transition: background 0.1s; line-height: 1; flex-shrink: 0; }
+    .cal-nav-btn:hover { background: var(--bg-secondary); }
+    .cal-selects { display: flex; gap: 4px; flex: 1; justify-content: center; }
+    .cal-select { font-size: 13px; font-weight: 500; font-family: var(--font); background: var(--bg-secondary); color: var(--text-primary); border: 0.5px solid var(--border-light); border-radius: var(--radius-md); padding: 3px 6px; cursor: pointer; outline: none; }
+    .cal-select:hover { border-color: var(--border-mid); }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .cal-dow { font-size: 11px; color: var(--text-secondary); text-align: center; padding: 4px 0; font-weight: 500; }
+    .cal-day { font-size: 13px; text-align: center; padding: 6px 2px; border-radius: var(--radius-md); cursor: pointer; transition: background 0.1s; border: none; background: none; color: var(--text-primary); font-family: var(--font); }
+    .cal-day:hover { background: var(--bg-secondary); }
+    .cal-day.other-month { color: var(--text-secondary); opacity: 0.35; }
+    .cal-day.today { font-weight: 700; color: var(--accent); }
+    .cal-day.selected { background: var(--text-primary) !important; color: var(--bg-primary) !important; }
+    .cal-clear { margin-top: 10px; width: 100%; padding: 7px; font-size: 12px; color: var(--text-secondary); background: none; border: 0.5px solid var(--border-light); border-radius: var(--radius-md); cursor: pointer; font-family: var(--font); transition: background 0.1s; }
+    .cal-clear:hover { background: var(--bg-secondary); }
+
+    /* Photo upload */
+    .photo-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 0; }
+    .photo-btns.single-col { grid-template-columns: 1fr; }
+    .photo-btn { border: 0.5px dashed var(--border-mid); border-radius: var(--radius-md); padding: 0.9rem 0.5rem; text-align: center; cursor: pointer; background: var(--bg-secondary); transition: background 0.15s; position: relative; }
+    .photo-btn:hover { background: var(--bg-tertiary); }
+    .photo-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .photo-btn .up-icon { font-size: 20px; margin-bottom: 3px; }
+    .photo-btn p { font-size: 12px; color: var(--text-secondary); }
+    .photo-btn.maxed { opacity: 0.45; pointer-events: none; cursor: not-allowed; }
+    /* keep old .photo-upload for edit modal compat */
+    .photo-upload { border: 0.5px dashed var(--border-mid); border-radius: var(--radius-md); padding: 1.1rem; text-align: center; cursor: pointer; background: var(--bg-secondary); transition: background 0.15s; position: relative; }
+    .photo-upload:hover { background: var(--bg-tertiary); }
+    .photo-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .photo-upload .up-icon { font-size: 20px; margin-bottom: 4px; }
+    .photo-upload p { font-size: 12px; color: var(--text-secondary); }
+    .photo-upload.maxed { opacity: 0.45; pointer-events: none; cursor: not-allowed; }
+    .photo-preview { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .photo-wrap { position: relative; width: 70px; height: 70px; flex-shrink: 0; }
+    .photo-thumb { width: 70px; height: 70px; object-fit: cover; border-radius: var(--radius-md); border: 0.5px solid var(--border-light); display: block; }
+    .photo-remove { position: absolute; top: -7px; right: -7px; width: 20px; height: 20px; border-radius: 50%; background: #A32D2D; color: #fff; border: 2px solid var(--bg-primary); cursor: pointer; font-size: 10px; line-height: 16px; text-align: center; padding: 0; font-family: var(--font); font-weight: 700; }
+    .photo-remove:hover { background: #7a1f1f; }
+
+    .add-btn { width: 100%; padding: 11px; background: var(--text-primary); color: var(--bg-primary); border: none; border-radius: var(--radius-md); font-size: 15px; font-weight: 500; cursor: pointer; font-family: var(--font); transition: opacity 0.15s; }
+    .add-btn:hover { opacity: 0.85; }
+
+    /* Items panel */
+    .summary-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1.5rem; }
+    .stat { background: var(--bg-primary); border: 0.5px solid var(--border-light); border-radius: var(--radius-md); padding: 12px 14px; }
+    .stat-num { font-size: 24px; font-weight: 600; }
+    .stat-lbl { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+    .search-row { margin-bottom: 10px; position: relative; }
+    .search-row input { width: 100%; padding: 9px 10px 9px 36px; font-size: 14px; font-family: var(--font); border: 0.5px solid var(--border-mid); border-radius: var(--radius-md); background: var(--bg-primary); color: var(--text-primary); outline: none; transition: border-color 0.15s; }
+    .search-row input:focus { border-color: var(--text-primary); }
+    .search-row .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 15px; opacity: 0.4; pointer-events: none; }
+    .search-clear { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 16px; color: var(--text-secondary); cursor: pointer; line-height: 1; padding: 2px; display: none; }
+    .search-clear.visible { display: block; }
+    .filter-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+    .filter-row select { flex: 1; padding: 8px 10px; font-size: 13px; font-family: var(--font); border: 0.5px solid var(--border-mid); border-radius: var(--radius-md); background: var(--bg-primary); color: var(--text-primary); outline: none; }
+
+    /* Item cards — clickable, X top-right */
+    .items-list { display: flex; flex-direction: column; gap: 10px; }
+    .item-card {
+      background: var(--bg-primary); border: 0.5px solid var(--border-light);
+      border-radius: var(--radius-lg); padding: 1rem 1.25rem 1rem 1rem;
+      display: flex; gap: 12px; align-items: flex-start;
+      cursor: pointer; position: relative;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .item-card:hover { border-color: var(--border-mid); box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+    .item-del {
+      position: absolute; top: 8px; right: 8px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--bg-secondary); border: 0.5px solid var(--border-light);
+      color: var(--text-secondary); font-size: 11px;
+      line-height: 22px; text-align: center;
+      cursor: pointer; padding: 0; font-family: var(--font);
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+      flex-shrink: 0;
+    }
+    .item-del:hover { background: #FCEBEB; color: #A32D2D; border-color: #F09595; }
+
+    .item-thumbs { display: flex; gap: 4px; flex-shrink: 0; }
+    .item-thumb { width: 50px; height: 50px; border-radius: var(--radius-md); object-fit: cover; border: 0.5px solid var(--border-light); }
+    .item-no-thumb { width: 50px; height: 50px; border-radius: var(--radius-md); background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .item-info { flex: 1; min-width: 0; padding-right: 20px; }
+    .item-name { font-size: 15px; font-weight: 500; margin-bottom: 2px; }
+    .item-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 7px; }
+    .item-badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+    /* Solid bold badges for status */
+    .badge { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 99px; }
+    .badge-ok   { background: #3B6D11; color: #ffffff; }
+    .badge-warn { background: #C47A1A; color: #ffffff; }
+    .badge-exp  { background: #A32D2D; color: #ffffff; }
+    .badge-type { background: var(--bg-secondary); color: var(--text-secondary); border: 0.5px solid var(--border-mid); font-weight: 400; font-size: 11px; }
+
+    .empty { text-align: center; padding: 3rem 1rem; color: var(--text-secondary); font-size: 14px; }
+    .empty .big { font-size: 40px; margin-bottom: 10px; }
+
+    /* Expiry banner */
+    .expiry-banner { display: none; border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 1.25rem; }
+    .expiry-banner.has-expired { display: block; background: #FCEBEB; border: 1px solid #F09595; }
+    .expiry-banner.has-soon { display: block; background: #FEF3E2; border: 1px solid #EF9F27; }
+    .expiry-banner.has-both { display: block; background: #FCEBEB; border: 1px solid #F09595; }
+    .banner-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; color: var(--text-primary); }
+    .banner-lines { display: flex; flex-direction: column; gap: 3px; }
+    .banner-line { font-size: 13px; display: flex; align-items: center; gap: 6px; }
+    .banner-line.line-exp  { color: #A32D2D; }
+    .banner-line.line-soon { color: #854F0B; }
+    .banner-dismiss { float: right; background: none; border: none; font-size: 16px; cursor: pointer; color: var(--text-secondary); line-height: 1; margin-left: 8px; margin-top: -2px; }
+    .banner-dismiss:hover { color: var(--text-primary); }
+
+    /* Edit modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 400; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--bg-primary); border-radius: var(--radius-lg); padding: 1.5rem; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; position: relative; }
+    #add-modal .modal, #history-modal .modal { border: 0.5px solid var(--border-mid); }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+    .modal-header h2 { font-size: 17px; font-weight: 600; }
+    .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary); line-height: 1; padding: 2px 6px; }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-actions { display: flex; gap: 8px; margin-top: 1.25rem; }
+    .save-btn { flex: 1; padding: 10px; background: var(--text-primary); color: var(--bg-primary); border: none; border-radius: var(--radius-md); font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--font); transition: opacity 0.15s; }
+    .save-btn:hover { opacity: 0.85; }
+    .cancel-btn { padding: 10px 18px; background: none; color: var(--text-secondary); border: 0.5px solid var(--border-mid); border-radius: var(--radius-md); font-size: 14px; cursor: pointer; font-family: var(--font); transition: background 0.1s; }
+    .cancel-btn:hover { background: var(--bg-secondary); }
+
+    /* History */
+    .history-btn { position: fixed; bottom: 1.5rem; left: 1.5rem; width: 46px; height: 46px; border-radius: 50%; background: var(--bg-primary); color: var(--text-secondary); border: 0.5px solid var(--border-mid); font-size: 20px; line-height: 46px; text-align: center; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 100; padding: 0; transition: box-shadow 0.15s; }
+    .history-btn:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
+    .history-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 0.5px solid var(--border-light); }
+    .history-item:last-child { border-bottom: none; }
+    .history-thumb { width: 40px; height: 40px; border-radius: var(--radius-md); object-fit: cover; border: 0.5px solid var(--border-light); flex-shrink: 0; }
+    .history-no-thumb { width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--bg-secondary); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .history-info { flex: 1; min-width: 0; }
+    .history-name { font-size: 14px; font-weight: 500; }
+    .history-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .history-days { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+    .history-restore { font-size: 12px; color: var(--accent); background: none; border: 0.5px solid var(--accent); border-radius: var(--radius-md); cursor: pointer; padding: 3px 10px; font-family: var(--font); transition: background 0.1s; flex-shrink: 0; }
+    .history-restore:hover { background: var(--accent-bg); }
+    .history-empty { text-align: center; padding: 2rem 1rem; color: var(--text-secondary); font-size: 14px; }
+
+    .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--text-primary); color: var(--bg-primary); padding: 10px 20px; border-radius: var(--radius-md); font-size: 14px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; white-space: nowrap; }
+    .toast.show { opacity: 1; }
+
+    @media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
+
+    /* Lightbox */
+    .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; align-items: center; justify-content: center; cursor: zoom-out; }
+    .lightbox.open { display: flex; }
+    .lightbox img { max-width: 95vw; max-height: 92vh; border-radius: var(--radius-md); object-fit: contain; box-shadow: 0 8px 40px rgba(0,0,0,0.6); }
+    .lightbox-close { position: fixed; top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.15); border: none; color: #fff; font-size: 18px; cursor: pointer; line-height: 36px; text-align: center; padding: 0; }
+    .lightbox-close:hover { background: rgba(255,255,255,0.25); }
+    .item-thumb { cursor: zoom-in; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-left">
+      <h1>🏡 Home Tracker</h1>
+      <p>Track food freshness and household warranties.</p>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()"><span id="theme-icon">🌙</span></button>
+  </div>
+
+  <!-- Expiry banner -->
+  <div class="expiry-banner" id="expiry-banner">
+    <button class="banner-dismiss" onclick="dismissBanner()">✕</button>
+    <div class="banner-title" id="banner-title"></div>
+    <div class="banner-lines" id="banner-lines"></div>
+  </div>
+
+  <div class="summary-bar">
+    <div class="stat"><div class="stat-num" id="s-total">0</div><div class="stat-lbl">Total items</div></div>
+    <div class="stat"><div class="stat-num" id="s-exp" style="color:#A32D2D">0</div><div class="stat-lbl">Expired</div></div>
+    <div class="stat"><div class="stat-num" id="s-soon" style="color:#C47A1A">0</div><div class="stat-lbl">Expiring soon</div></div>
+  </div>
+  <div class="search-row">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="search-input" placeholder="Search items…" oninput="onSearch(this)" />
+    <button class="search-clear" id="search-clear" onclick="clearSearch()">✕</button>
+  </div>
+  <div class="filter-row">
+    <select id="filter-type" onchange="renderItems()">
+      <option value="">All types</option>
+      <option value="food">Food</option>
+      <option value="household">Household</option>
+    </select>
+    <select id="filter-status" onchange="renderItems()">
+      <option value="">All statuses</option>
+      <option value="ok">Good</option>
+      <option value="soon">Expiring soon</option>
+      <option value="expired">Expired</option>
+    </select>
+  </div>
+  <div class="items-list" id="items-list"></div>
+
+  <!-- Floating add button -->
+  <button class="fab" onclick="openAddModal()" title="Add item">＋</button>
+  <button class="history-btn" onclick="openHistoryModal()" title="Recently removed">🗑️</button>
+</div>
+
+<!-- ADD MODAL -->
+<div class="modal-overlay" id="add-modal" onclick="closeAddModalOverlay(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Add item</h2>
+      <button class="modal-close" onclick="closeAddModal()">✕</button>
+    </div>
+    <div style="margin-bottom:1rem;">
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Item type</div>
+      <div class="type-select">
+        <button class="type-btn selected" id="btn-food" onclick="selectType('food')">
+          <span class="icon">🥦</span><span class="lbl">Food</span>
+        </button>
+        <button class="type-btn" id="btn-household" onclick="selectType('household')">
+          <span class="icon">🏠</span><span class="lbl">Household item</span>
+        </button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Item name</label>
+      <input type="text" id="f-name" placeholder="e.g. Milk, Microwave…" />
+    </div>
+    <div class="row2">
+      <div class="field date-field">
+        <label>Purchase date</label>
+        <button class="date-input-btn" id="btn-purchase" onclick="toggleCal(event,'purchase')">
+          <span id="display-purchase" class="placeholder">Select date</span>
+          <span class="cal-icon">📅</span>
+        </button>
+        <div class="cal-popup" id="cal-purchase"></div>
+      </div>
+      <div class="field date-field">
+        <label id="lbl-expiry">Expiry date</label>
+        <button class="date-input-btn" id="btn-expiry" onclick="toggleCal(event,'expiry')">
+          <span id="display-expiry" class="placeholder">Select date</span>
+          <span class="cal-icon">📅</span>
+        </button>
+        <div class="cal-popup" id="cal-expiry"></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Photos (up to 3)</label>
+      <div class="photo-btns" id="add-photo-btns">
+        <div class="photo-btn" id="add-camera-btn">
+          <div class="up-icon">📷</div>
+          <p>Take photo</p>
+          <input type="file" accept="image/*" capture="environment" onchange="handleAddPhoto(event)" />
+        </div>
+        <div class="photo-btn" id="add-gallery-btn">
+          <div class="up-icon">🖼️</div>
+          <p>Choose from gallery</p>
+          <input type="file" accept="image/*" onchange="handleAddPhoto(event)" />
+        </div>
+      </div>
+      <div class="photo-preview" id="photo-preview"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel-btn" onclick="closeAddModal()">Cancel</button>
+      <button class="save-btn" onclick="addItem()">Add item</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY MODAL -->
+<div class="modal-overlay" id="history-modal" onclick="closeHistoryModalOverlay(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>🗂 Recently removed</h2>
+      <button class="modal-close" onclick="closeHistoryModal()">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:1rem;">Items removed in the last 30 days. Tap Restore to add them back.</p>
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="edit-modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Edit item</h2>
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div style="margin-bottom:1rem;">
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Item type</div>
+      <div class="type-select">
+        <button class="type-btn selected" id="edit-btn-food" onclick="editSelectType('food')">
+          <span class="icon">🥦</span><span class="lbl">Food</span>
+        </button>
+        <button class="type-btn" id="edit-btn-household" onclick="editSelectType('household')">
+          <span class="icon">🏠</span><span class="lbl">Household item</span>
+        </button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Item name</label>
+      <input type="text" id="edit-name" placeholder="Item name" />
+    </div>
+    <div class="row2">
+      <div class="field date-field">
+        <label>Purchase date</label>
+        <button class="date-input-btn" id="btn-edit-purchase" onclick="toggleCal(event,'edit-purchase')">
+          <span id="display-edit-purchase" class="placeholder">Select date</span>
+          <span class="cal-icon">📅</span>
+        </button>
+        <div class="cal-popup" id="cal-edit-purchase"></div>
+      </div>
+      <div class="field date-field">
+        <label id="edit-lbl-expiry">Expiry date</label>
+        <button class="date-input-btn" id="btn-edit-expiry" onclick="toggleCal(event,'edit-expiry')">
+          <span id="display-edit-expiry" class="placeholder">Select date</span>
+          <span class="cal-icon">📅</span>
+        </button>
+        <div class="cal-popup" id="cal-edit-expiry"></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Photos (up to 3)</label>
+      <div class="photo-btns" id="edit-photo-btns">
+        <div class="photo-btn" id="edit-camera-btn">
+          <div class="up-icon">📷</div>
+          <p>Take photo</p>
+          <input type="file" accept="image/*" capture="environment" onchange="handleEditPhoto(event)" />
+        </div>
+        <div class="photo-btn" id="edit-gallery-btn">
+          <div class="up-icon">🖼️</div>
+          <p>Choose from gallery</p>
+          <input type="file" accept="image/*" onchange="handleEditPhoto(event)" />
+        </div>
+      </div>
+      <div class="photo-preview" id="edit-photo-preview"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+      <button class="save-btn" onclick="saveEdit()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="Full size" onclick="event.stopPropagation()" />
+</div>
+
+<script>
+  const MONTHS_S = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MONTHS   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DOW      = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  const MAX_PHOTOS = 3;
+
+  let items = JSON.parse(localStorage.getItem('hometracker-v2') || '[]');
+  let deletedItems = JSON.parse(localStorage.getItem('hometracker-deleted') || '[]');
+  // Migrate all IDs to strings for safe comparison
+  items.forEach(function(i) { i.id = String(i.id); });
+  deletedItems.forEach(function(i) { i.id = String(i.id); });
+  let currentType = 'food';
+  let addPhotos = [];
+  let searchQuery = '';
+  let bannerDismissed = false;
+
+  let editingIdx = -1;
+  let editType = 'food';
+  let editPhotos = [];
+
+  const cal = {};
+  function initCal(id) {
+    const n = new Date();
+    cal[id] = { year: n.getFullYear(), month: n.getMonth(), selected: null };
+  }
+  ['purchase','expiry','edit-purchase','edit-expiry'].forEach(initCal);
+
+  function save() {
+    try {
+      localStorage.setItem('hometracker-v2', JSON.stringify(items));
+    } catch(e) {
+      showToast('Storage full — try removing some photos from items.');
+    }
+  }
+  function todayMidnight() { const d = new Date(); d.setHours(0,0,0,0); return d; }
+
+  function toISO(y, m, d) {
+    const dt = new Date(y, m, d);
+    return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+  }
+  function fmtDisplay(iso) {
+    if (!iso) return null;
+    const [y,m,d] = iso.split('-').map(Number);
+    return `${String(d).padStart(2,'0')} ${MONTHS_S[m-1]} ${y}`;
+  }
+  function fmtDate(iso) { return fmtDisplay(iso) || '—'; }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  /* ── Add modal ── */
+  function openAddModal() {
+    setupCameraButtons();
+    // reset form
+    currentType = 'food';
+    selectType('food');
+    document.getElementById('f-name').value = '';
+    clearDate(null,'purchase'); clearDate(null,'expiry');
+    addPhotos = []; refreshAddPhotoPreview();
+    document.getElementById('add-modal').classList.add('open');
+  }
+  function closeAddModal() {
+    document.getElementById('add-modal').classList.remove('open');
+    closeAllCals();
+  }
+  function closeAddModalOverlay(e) {
+    if (e.target === document.getElementById('add-modal')) closeAddModal();
+  }
+
+  /* ── Type selectors ── */
+  function selectType(type) {
+    currentType = type;
+    document.getElementById('btn-food').classList.toggle('selected', type === 'food');
+    document.getElementById('btn-household').classList.toggle('selected', type === 'household');
+    document.getElementById('lbl-expiry').textContent = type === 'food' ? 'Expiry date' : 'Warranty expiry';
+  }
+  function editSelectType(type) {
+    editType = type;
+    document.getElementById('edit-btn-food').classList.toggle('selected', type === 'food');
+    document.getElementById('edit-btn-household').classList.toggle('selected', type === 'household');
+    document.getElementById('edit-lbl-expiry').textContent = type === 'food' ? 'Expiry date' : 'Warranty expiry';
+  }
+
+  /* ── Photo helpers ── */
+  function readFile(file) {
+    return new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
+  }
+
+  function renderPhotoPreview(previewId, _zoneId, _labelId, photosArr, onRemove) {
+    const prev = document.getElementById(previewId);
+    prev.innerHTML = photosArr.map((src, i) => `
+      <div class="photo-wrap">
+        <img class="photo-thumb" src="${src}" alt="Photo ${i+1}" />
+        <button class="photo-remove" data-i="${i}">✕</button>
+      </div>`).join('');
+    prev.onclick = function(e) {
+      var btn = e.target.closest('.photo-remove');
+      if (btn) { e.stopPropagation(); onRemove(parseInt(btn.dataset.i)); }
+    };
+  }
+
+  async function handleAddPhoto(e) {
+    const file = e.target.files[0]; if (!file) return;
+    if (addPhotos.length >= MAX_PHOTOS) return;
+    addPhotos.push(await readFile(file));
+    e.target.value = '';
+    refreshAddPhotoPreview();
+  }
+
+  function refreshAddPhotoPreview() {
+    const maxed = addPhotos.length >= MAX_PHOTOS;
+    ['add-camera-btn','add-gallery-btn'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('maxed', maxed);
+    });
+    renderPhotoPreview('photo-preview', null, null, addPhotos, i => {
+      addPhotos.splice(i, 1);
+      refreshAddPhotoPreview();
+    });
+  }
+
+  async function handleEditPhoto(e) {
+    const file = e.target.files[0]; if (!file) return;
+    if (editPhotos.length >= MAX_PHOTOS) return;
+    editPhotos.push(await readFile(file));
+    e.target.value = '';
+    refreshEditPhotoPreview();
+  }
+
+  function refreshEditPhotoPreview() {
+    const maxed = editPhotos.length >= MAX_PHOTOS;
+    ['edit-camera-btn','edit-gallery-btn'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('maxed', maxed);
+    });
+    renderPhotoPreview('edit-photo-preview', null, null, editPhotos, i => {
+      editPhotos.splice(i, 1);
+      refreshEditPhotoPreview();
+    });
+  }
+
+  /* ── Add item ── */
+  function addItem() {
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) { showToast('Please enter an item name.'); return; }
+    items.unshift({ id: String(Date.now()), name, type: currentType, purchase: cal['purchase'].selected, expiry: cal['expiry'].selected, photos: [...addPhotos] });
+    save();
+    document.getElementById('f-name').value = '';
+    clearDate(null, 'purchase'); clearDate(null, 'expiry');
+    addPhotos = [];
+    refreshAddPhotoPreview();
+    closeAddModal();
+    renderItems();
+    showToast(`"${name}" added!`);
+  }
+
+  /* ── Edit modal ── */
+  function openEditModal(itemId) {
+    editingIdx = items.findIndex(i => String(i.id) === String(itemId));
+    if (editingIdx === -1) return;
+    const it = items[editingIdx];
+    editType = it.type;
+    document.getElementById('edit-name').value = it.name;
+    editSelectType(it.type);
+
+    const setCalDate = (calId, iso) => {
+      const n = new Date();
+      cal[calId].year  = iso ? parseInt(iso.split('-')[0]) : n.getFullYear();
+      cal[calId].month = iso ? parseInt(iso.split('-')[1]) - 1 : n.getMonth();
+      cal[calId].selected = iso || null;
+      const sp = document.getElementById('display-' + calId);
+      if (iso) { sp.textContent = fmtDisplay(iso); sp.classList.remove('placeholder'); }
+      else { sp.textContent = 'Select date'; sp.classList.add('placeholder'); }
+    };
+    setCalDate('edit-purchase', it.purchase);
+    setCalDate('edit-expiry', it.expiry);
+
+    editPhotos = it.photos && it.photos.length ? [...it.photos] : (it.photo ? [it.photo] : []);
+    refreshEditPhotoPreview();
+    setupCameraButtons();
+    document.getElementById('edit-modal').classList.add('open');
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal').classList.remove('open');
+    closeAllCals(); editingIdx = -1;
+  }
+  function closeModal(e) {
+    if (e.target === document.getElementById('edit-modal')) closeEditModal();
+  }
+
+  function saveEdit() {
+    const name = document.getElementById('edit-name').value.trim();
+    if (!name) { showToast('Please enter an item name.'); return; }
+    const it = items[editingIdx];
+    it.name = name; it.type = editType;
+    it.purchase = cal['edit-purchase'].selected;
+    it.expiry   = cal['edit-expiry'].selected;
+    it.photos   = [...editPhotos];
+    delete it.photo;
+    save(); closeEditModal(); renderItems();
+    showToast(`"${name}" updated!`);
+  }
+
+  /* ── Delete ── */
+  function deleteItem(itemId) {
+    const idx = items.findIndex(function(i) { return String(i.id) === String(itemId); });
+    if (idx === -1) return;
+    const item = items[idx];
+    items.splice(idx, 1);
+    // Archive without photos to avoid exceeding localStorage quota
+    var archived = {
+      id: item.id,
+      name: item.name,
+      type: item.type,
+      purchase: item.purchase,
+      expiry: item.expiry,
+      deletedAt: Date.now()
+    };
+    deletedItems.unshift(archived);
+    // Prune entries older than 30 days
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    deletedItems = deletedItems.filter(function(i) { return i.deletedAt >= cutoff; });
+    try {
+      localStorage.setItem('hometracker-deleted', JSON.stringify(deletedItems));
+    } catch(e) {
+      // If still too full, clear deleted history and try again
+      deletedItems = [archived];
+      try { localStorage.setItem('hometracker-deleted', JSON.stringify(deletedItems)); } catch(e2) {}
+    }
+    save(); renderItems();
+    showToast('"' + item.name + '" removed.');
+  }
+
+  /* ── Status ── */
+  function getStatus(expiry) {
+    if (!expiry) return 'ok';
+    const diff = Math.round((new Date(expiry+'T00:00:00') - todayMidnight()) / 86400000);
+    if (diff < 0) return 'expired'; if (diff <= 7) return 'soon'; return 'ok';
+  }
+  function daysLabel(expiry) {
+    if (!expiry) return null;
+    const diff = Math.round((new Date(expiry+'T00:00:00') - todayMidnight()) / 86400000);
+    if (diff < 0) return `Expired ${Math.abs(diff)}d ago`;
+    if (diff === 0) return 'Expires today';
+    if (diff === 1) return 'Expires tomorrow';
+    return `${diff}d remaining`;
+  }
+
+  /* ── Expiry banner ── */
+  function updateBanner() {
+    if (bannerDismissed) return;
+    const banner   = document.getElementById('expiry-banner');
+    const title    = document.getElementById('banner-title');
+    const lines    = document.getElementById('banner-lines');
+
+    const expired = items.filter(i => getStatus(i.expiry) === 'expired');
+    const soon    = items.filter(i => getStatus(i.expiry) === 'soon');
+
+    if (expired.length === 0 && soon.length === 0) {
+      banner.className = 'expiry-banner'; return;
+    }
+
+    const hasBoth = expired.length > 0 && soon.length > 0;
+    banner.className = 'expiry-banner ' + (hasBoth ? 'has-both' : expired.length ? 'has-expired' : 'has-soon');
+
+    const parts = [];
+    if (expired.length) parts.push(`${expired.length} item${expired.length>1?'s':''} expired`);
+    if (soon.length)    parts.push(`${soon.length} item${soon.length>1?'s':''} expiring within 30 days`);
+    title.textContent = '⚠️ Attention needed';
+
+    let html = '';
+    if (expired.length) html += `<div class="banner-line line-exp">🔴 ${expired.length} item${expired.length>1?'s':''} have already expired</div>`;
+    if (soon.length)    html += `<div class="banner-line line-soon">🟠 ${soon.length} item${soon.length>1?'s':''} expiring within 7 days</div>`;
+    lines.innerHTML = html;
+  }
+
+  function dismissBanner() {
+    bannerDismissed = true;
+    document.getElementById('expiry-banner').className = 'expiry-banner';
+  }
+
+  /* ── Search ── */
+  function onSearch(input) {
+    searchQuery = input.value.trim().toLowerCase();
+    document.getElementById('search-clear').classList.toggle('visible', searchQuery.length > 0);
+    renderItems();
+  }
+  function clearSearch() {
+    searchQuery = '';
+    document.getElementById('search-input').value = '';
+    document.getElementById('search-clear').classList.remove('visible');
+    renderItems();
+  }
+
+  /* ── Render items ── */
+  function renderItems() {
+    const tf = document.getElementById('filter-type').value;
+    const sf = document.getElementById('filter-status').value;
+    const filtered = items.map((it, idx) => ({ it, idx })).filter(({ it }) => {
+      if (tf && it.type !== tf) return false;
+      if (sf && getStatus(it.expiry) !== sf) return false;
+      if (searchQuery && !it.name.toLowerCase().includes(searchQuery)) return false;
+      return true;
+    });
+
+    document.getElementById('s-total').textContent = items.length;
+    document.getElementById('s-exp').textContent   = items.filter(i => getStatus(i.expiry) === 'expired').length;
+    document.getElementById('s-soon').textContent  = items.filter(i => getStatus(i.expiry) === 'soon').length;
+    updateBanner();
+
+    const list = document.getElementById('items-list');
+    if (!filtered.length) {
+      list.innerHTML = `<div class="empty"><div class="big">${items.length?'🔍':'📦'}</div>${items.length?'No items match your filter.':'No items yet — add your first one!'}</div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(({ it, idx }) => {
+      const st = getStatus(it.expiry);
+      const bc = st==='expired'?'badge-exp':st==='soon'?'badge-warn':'badge-ok';
+      const dl = daysLabel(it.expiry);
+      const expLbl = it.type==='food'?'Expiry':'Warranty expiry';
+      const photoList = it.photos && it.photos.length ? it.photos : (it.photo ? [it.photo] : []);
+      const thumbsHtml = photoList.length
+        ? `<div class="item-thumbs">${photoList.map(p=>`<img class="item-thumb" src="${p}" alt="${it.name}" onclick="event.stopPropagation();openLightbox('${p}')"/>`).join('')}</div>`
+        : `<div class="item-no-thumb">${it.type==='food'?'🥦':'🏠'}</div>`;
+
+      return `<div class="item-card" data-id="${it.id}">
+        <button class="item-del" data-id="${it.id}" title="Remove item">✕</button>
+        ${thumbsHtml}
+        <div class="item-info">
+          <div class="item-name">${it.name}</div>
+          <div class="item-meta">Bought: ${fmtDate(it.purchase)} &nbsp;·&nbsp; ${expLbl}: ${fmtDate(it.expiry)}</div>
+          <div class="item-badges">
+            <span class="badge badge-type">${it.type==='food'?'Food':'Household'}</span>
+            ${dl?`<span class="badge ${bc}">${dl}</span>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Use event delegation — one listener on the list, survives re-renders
+    list.onclick = function(e) {
+      var delBtn = e.target.closest('.item-del');
+      if (delBtn) {
+        e.stopPropagation();
+        deleteItem(delBtn.dataset.id);
+        return;
+      }
+      var card = e.target.closest('.item-card');
+      if (card) {
+        openEditModal(card.dataset.id);
+      }
+    };
+  }
+
+  /* ── History modal ── */
+  function openHistoryModal() {
+    renderHistory();
+    document.getElementById('history-modal').classList.add('open');
+  }
+  function closeHistoryModal() {
+    document.getElementById('history-modal').classList.remove('open');
+  }
+  function closeHistoryModalOverlay(e) {
+    if (e.target === document.getElementById('history-modal')) closeHistoryModal();
+  }
+
+  function renderHistory() {
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    deletedItems = deletedItems.filter(i => i.deletedAt >= cutoff);
+    localStorage.setItem('hometracker-deleted', JSON.stringify(deletedItems));
+
+    const list = document.getElementById('history-list');
+    if (!deletedItems.length) {
+      list.innerHTML = '<div class="history-empty">No recently removed items.</div>';
+      return;
+    }
+    list.innerHTML = deletedItems.map((it, i) => {
+      const daysAgo = Math.round((Date.now() - it.deletedAt) / 86400000);
+      const ago = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo} days ago`;
+      const photoList = it.photos && it.photos.length ? it.photos : (it.photo ? [it.photo] : []);
+      const thumb = photoList.length
+        ? `<img class="history-thumb" src="${photoList[0]}" alt="${it.name}"/>`
+        : `<div class="history-no-thumb">${it.type==='food'?'🥦':'🏠'}</div>`;
+      return `<div class="history-item">
+        ${thumb}
+        <div class="history-info">
+          <div class="history-name">${it.name}</div>
+          <div class="history-meta">${it.type==='food'?'Food':'Household'} · Bought: ${fmtDate(it.purchase)}</div>
+          <div class="history-days">Removed: ${ago}</div>
+        </div>
+        <button class="history-restore" data-i="${i}">Restore</button>
+      </div>`;
+    }).join('');
+
+    list.onclick = function(e) {
+      var btn = e.target.closest('.history-restore');
+      if (btn) restoreItem(parseInt(btn.dataset.i));
+    };
+  }
+
+  function restoreItem(i) {
+    var it = JSON.parse(JSON.stringify(deletedItems[i]));
+    delete it.deletedAt;
+    items.unshift(it);
+    deletedItems.splice(i, 1);
+    localStorage.setItem('hometracker-deleted', JSON.stringify(deletedItems));
+    save(); renderItems(); renderHistory();
+    showToast('"' + it.name + '" restored!');
+  }
+
+  /* ── Lightbox ── */
+  function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').classList.add('open');
+  }
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.getElementById('lightbox-img').src = '';
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
+  });
+
+  /* ── Calendar ── */
+  function closeAllCals() {
+    document.querySelectorAll('.cal-popup').forEach(p => p.classList.remove('open'));
+    document.querySelectorAll('.date-input-btn').forEach(b => b.classList.remove('open'));
+  }
+  function toggleCal(e, id) {
+    e.stopPropagation();
+    if (!cal[id]) initCal(id);
+    const popup = document.getElementById('cal-'+id);
+    const wasOpen = popup.classList.contains('open');
+    closeAllCals();
+    if (!wasOpen) { popup.classList.add('open'); document.getElementById('btn-'+id).classList.add('open'); renderCal(id); }
+  }
+  function renderCal(id) {
+    const s = cal[id], popup = document.getElementById('cal-'+id);
+    const todayTs = todayMidnight().getTime();
+    const firstDow = new Date(s.year, s.month, 1).getDay();
+    const daysInMo = new Date(s.year, s.month+1, 0).getDate();
+    const daysInPrev = new Date(s.year, s.month, 0).getDate();
+    let cells = '';
+    for (let i=firstDow-1; i>=0; i--) { const d=daysInPrev-i; cells+=mkDay(d,toISO(s.year,s.month-1,d),s.selected,todayTs,true); }
+    for (let d=1; d<=daysInMo; d++) cells += mkDay(d,toISO(s.year,s.month,d),s.selected,todayTs,false);
+    const rem = (firstDow+daysInMo)%7===0?0:7-(firstDow+daysInMo)%7;
+    for (let d=1; d<=rem; d++) cells += mkDay(d,toISO(s.year,s.month+1,d),s.selected,todayTs,true);
+
+    const thisYear = new Date().getFullYear();
+    const yearOpts = [];
+    for (let y=thisYear-20; y<=thisYear+20; y++) yearOpts.push(`<option value="${y}" ${y===s.year?'selected':''}>${y}</option>`);
+    const monthOpts = MONTHS.map((m,i) => `<option value="${i}" ${i===s.month?'selected':''}>${m}</option>`).join('');
+
+    popup.innerHTML = `
+      <div class="cal-nav">
+        <button class="cal-nav-btn" data-dir="-1">&#8249;</button>
+        <div class="cal-selects">
+          <select class="cal-select" data-type="month">${monthOpts}</select>
+          <select class="cal-select" data-type="year">${yearOpts.join('')}</select>
+        </div>
+        <button class="cal-nav-btn" data-dir="1">&#8250;</button>
+      </div>
+      <div class="cal-grid">${DOW.map(d=>`<div class="cal-dow">${d}</div>`).join('')}${cells}</div>
+      <button class="cal-clear">Clear date</button>`;
+
+    popup.querySelectorAll('.cal-nav-btn').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); shiftCal(id, parseInt(btn.dataset.dir)); });
+    });
+    popup.querySelectorAll('.cal-select').forEach(sel => {
+      sel.addEventListener('change', e => { e.stopPropagation(); if(sel.dataset.type==='month') cal[id].month=parseInt(sel.value); else cal[id].year=parseInt(sel.value); renderCal(id); });
+      sel.addEventListener('click', e => e.stopPropagation());
+    });
+    popup.querySelector('.cal-clear').addEventListener('click', e => { e.stopPropagation(); clearDate(null, id); });
+    popup.querySelectorAll('.cal-day-btn').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); pickDate(id, btn.dataset.iso); });
+    });
+  }
+  function mkDay(label, iso, selected, todayTs, other) {
+    const [y,m,d] = iso.split('-').map(Number);
+    const ts = new Date(y,m-1,d).getTime();
+    const cls = ['cal-day cal-day-btn', other?'other-month':'', ts===todayTs?'today':'', iso===selected?'selected':''].filter(Boolean).join(' ');
+    return `<button class="${cls}" data-iso="${iso}">${label}</button>`;
+  }
+  function shiftCal(id, dir) {
+    cal[id].month += dir;
+    if (cal[id].month>11){cal[id].month=0;cal[id].year++;} if(cal[id].month<0){cal[id].month=11;cal[id].year--;}
+    renderCal(id);
+  }
+  function pickDate(id, iso) {
+    cal[id].selected = iso;
+    const sp = document.getElementById('display-'+id);
+    sp.textContent = fmtDisplay(iso); sp.classList.remove('placeholder');
+    closeAllCals();
+  }
+  function clearDate(e, id) {
+    if (e) e.stopPropagation();
+    cal[id].selected = null;
+    const sp = document.getElementById('display-'+id);
+    sp.textContent = 'Select date'; sp.classList.add('placeholder');
+    closeAllCals();
+  }
+
+  document.addEventListener('click', () => closeAllCals());
+
+  /* ── Theme ── */
+  function applyTheme(dark) {
+    if (dark) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.getElementById('theme-icon').textContent = '☀️';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      document.getElementById('theme-icon').textContent = '🌙';
+    }
+  }
+
+  function toggleTheme() {
+    const isDark = document.documentElement.hasAttribute('data-theme');
+    const goLight = isDark; // currently dark → go light
+    applyTheme(!goLight);
+    localStorage.setItem('hometracker-theme', goLight ? 'light' : 'dark');
+  }
+
+  /* ── Mobile detection & camera visibility ── */
+  function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      || (navigator.maxTouchPoints > 1 && /MacIntel/.test(navigator.platform));
+  }
+
+  function setupCameraButtons() {
+    var isMobile = isMobileDevice();
+    ['add-camera-btn', 'edit-camera-btn'].forEach(function(id) {
+      var btn = document.getElementById(id);
+      if (!btn) return;
+      btn.style.display = isMobile ? '' : 'none';
+    });
+    // Make gallery button full width on desktop
+    ['add-photo-btns', 'edit-photo-btns'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      if (isMobile) {
+        el.classList.remove('single-col');
+      } else {
+        el.classList.add('single-col');
+      }
+    });
+  }
+
+  // Initialise on load
+  // Dark is default; light only if user explicitly chose it
+  const savedTheme = localStorage.getItem('hometracker-theme');
+  applyTheme(savedTheme !== 'light');
+  setupCameraButtons();
+  renderItems();
+</script>
+</body>
+</html>
