@@ -43,13 +43,28 @@
     .header-right { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
     .theme-toggle { background: none; border: none; font-size: 22px; cursor: pointer; padding: 4px; line-height: 1; opacity: 0.8; transition: opacity 0.15s; }
     .theme-toggle:hover { opacity: 1; }
-    .signout-btn { background: none; border: 0.5px solid var(--border-mid); border-radius: var(--radius-md); padding: 5px 12px; font-size: 12px; color: var(--text-secondary); cursor: pointer; font-family: var(--font); transition: background 0.15s; }
-    .signout-btn:hover { background: var(--bg-secondary); }
 
-    /* FAB */
-    .fab { position: fixed; bottom: 1.5rem; right: 1.5rem; width: 56px; height: 56px; border-radius: 50%; background: var(--text-primary); color: var(--bg-primary); border: none; font-size: 28px; line-height: 56px; text-align: center; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.2); z-index: 100; font-family: var(--font); transition: transform 0.15s, box-shadow 0.15s; padding: 0; }
+    /* Account chip + dropdown */
+    .account-wrap { position: relative; }
+    .account-chip { display: flex; align-items: center; gap: 7px; padding: 5px 10px; border: 0.5px solid var(--border-mid); border-radius: 99px; background: var(--bg-primary); cursor: pointer; font-family: var(--font); font-size: 13px; color: var(--text-primary); transition: background 0.15s; max-width: 160px; }
+    .account-chip:hover { background: var(--bg-secondary); }
+    .account-avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .account-avatar-placeholder { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .account-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .account-dropdown { display: none; position: absolute; top: calc(100% + 6px); right: 0; background: var(--bg-primary); border: 0.5px solid var(--border-mid); border-radius: var(--radius-lg); box-shadow: 0 6px 24px rgba(0,0,0,0.14); min-width: 200px; z-index: 500; overflow: hidden; }
+    .account-dropdown.open { display: block; }
+    .account-dropdown-info { padding: 12px 14px; border-bottom: 0.5px solid var(--border-light); }
+    .account-dropdown-name { font-size: 13px; font-weight: 600; }
+    .account-dropdown-email { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .account-dropdown-btn { width: 100%; padding: 10px 14px; text-align: left; font-size: 13px; font-family: var(--font); color: #A32D2D; background: none; border: none; cursor: pointer; transition: background 0.12s; }
+    .account-dropdown-btn:hover { background: #FCEBEB; }
+
+    /* Bottom bar */
+    .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; pointer-events: none; }
+    .bottom-bar-inner { max-width: 680px; margin: 0 auto; padding: 0 1rem 1.5rem; display: flex; justify-content: space-between; align-items: flex-end; pointer-events: none; }
+    .fab { width: 56px; height: 56px; border-radius: 50%; background: var(--text-primary); color: var(--bg-primary); border: none; font-size: 28px; line-height: 56px; text-align: center; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.2); font-family: var(--font); transition: transform 0.15s, box-shadow 0.15s; padding: 0; pointer-events: all; }
     .fab:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
-    .history-btn { position: fixed; bottom: 1.5rem; left: 1.5rem; width: 46px; height: 46px; border-radius: 50%; background: var(--bg-primary); color: var(--text-secondary); border: 0.5px solid var(--border-mid); font-size: 20px; line-height: 46px; text-align: center; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 100; padding: 0; transition: box-shadow 0.15s; }
+    .history-btn { width: 46px; height: 46px; border-radius: 50%; background: var(--bg-primary); color: var(--text-secondary); border: 0.5px solid var(--border-mid); font-size: 20px; line-height: 46px; text-align: center; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 0; transition: box-shadow 0.15s; pointer-events: all; }
     .history-btn:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
 
     .field { margin-bottom: 1rem; }
@@ -227,7 +242,19 @@
       </div>
       <div class="header-right">
         <button class="theme-toggle" id="theme-toggle"><span id="theme-icon">🌙</span></button>
-        <button class="signout-btn" id="signout-btn">Sign out</button>
+        <div class="account-wrap" id="account-wrap">
+          <button class="account-chip" id="account-chip">
+            <div class="account-avatar-placeholder" id="account-avatar-placeholder">?</div>
+            <span class="account-name" id="account-display-name">Account</span>
+          </button>
+          <div class="account-dropdown" id="account-dropdown">
+            <div class="account-dropdown-info">
+              <div class="account-dropdown-name" id="dropdown-name"></div>
+              <div class="account-dropdown-email" id="dropdown-email"></div>
+            </div>
+            <button class="account-dropdown-btn" id="signout-btn">Sign out</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -265,8 +292,14 @@
 
     <div class="items-list" id="items-list"><div class="loading-screen">Loading your items…</div></div>
 
-    <button class="fab" id="fab-add" title="Add item">＋</button>
+  </div>
+</div>
+
+<!-- Bottom bar aligned to container -->
+<div class="bottom-bar">
+  <div class="bottom-bar-inner">
     <button class="history-btn" id="fab-history" title="Recently removed">🗑️</button>
+    <button class="fab" id="fab-add" title="Add item">＋</button>
   </div>
 </div>
 
@@ -429,6 +462,7 @@
   window.signInWithGoogle = async function() {
     document.getElementById('auth-error').textContent = '';
     try {
+      provider.setCustomParameters({ prompt: 'select_account' });
       await signInWithPopup(auth, provider);
     } catch(e) {
       document.getElementById('auth-error').textContent = 'Sign-in failed. Please try again.';
@@ -436,16 +470,36 @@
   };
 
   window.doSignOut = async function() {
+    closeAccountDropdown();
     await signOut(auth);
     items = []; deletedItems = [];
     document.getElementById('items-list').innerHTML = '<div class="loading-screen">Loading your items…</div>';
   };
+
+  function populateAccountChip(user) {
+    const name = user.displayName || user.email || 'Account';
+    const short = name.split(' ')[0];
+    document.getElementById('account-display-name').textContent = short;
+    document.getElementById('dropdown-name').textContent = user.displayName || '';
+    document.getElementById('dropdown-email').textContent = user.email || '';
+    const placeholder = document.getElementById('account-avatar-placeholder');
+    if (user.photoURL) {
+      placeholder.outerHTML = '<img class="account-avatar" id="account-avatar-placeholder" src="' + user.photoURL + '" alt="avatar" />';
+    } else {
+      placeholder.textContent = name.charAt(0).toUpperCase();
+    }
+  }
+
+  function closeAccountDropdown() {
+    document.getElementById('account-dropdown').classList.remove('open');
+  }
 
   onAuthStateChanged(auth, user => {
     currentUser = user;
     if (user) {
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('app-screen').style.display  = 'block';
+      populateAccountChip(user);
       loadItems();
     } else {
       document.getElementById('auth-screen').style.display = 'flex';
@@ -460,10 +514,7 @@
       const snap = await getDocs(q);
       items = snap.docs.map(function(d) {
         var data = Object.assign({ docId: d.id }, d.data());
-        try {
-          var stored = localStorage.getItem('photos_' + d.id);
-          data.photoDataURLs = stored ? JSON.parse(stored) : [];
-        } catch(e) { data.photoDataURLs = []; }
+        if (!data.photoDataURLs) data.photoDataURLs = [];
         return data;
       });
       // Sort by createdAt descending in JS (no index needed)
@@ -475,7 +526,7 @@
       const cutoff = Date.now() - 30*24*60*60*1000;
       deletedItems = dsnap.docs.map(function(d){
         var data = Object.assign({ docId: d.id }, d.data());
-        try { var s = localStorage.getItem('photos_deleted_' + d.id); data.photoDataURLs = s ? JSON.parse(s) : []; } catch(e) { data.photoDataURLs = []; }
+        if (!data.photoDataURLs) data.photoDataURLs = [];
         return data;
       }).filter(function(i){ return i.deletedAt >= cutoff; });
       // Sort by deletedAt descending in JS
@@ -524,13 +575,9 @@
         uid: currentUser.uid, name, type: currentType,
         purchase: cal['purchase'].selected,
         expiry:   cal['expiry'].selected,
+        photoDataURLs,
         createdAt: Date.now()
       });
-
-      // Store photos in localStorage keyed by docId
-      if (photoDataURLs.length) {
-        try { localStorage.setItem('photos_' + docRef.id, JSON.stringify(photoDataURLs)); } catch(e) { showToast('Photos too large for local storage — try smaller images.'); }
-      }
 
       items.unshift({ docId: docRef.id, uid: currentUser.uid, name, type: currentType,
         purchase: cal['purchase'].selected, expiry: cal['expiry'].selected,
@@ -556,20 +603,14 @@
     const item = items[idx];
     try {
       await deleteDoc(doc(db,'items',docId));
-      // Grab photos before removing from localStorage
-      let archivedPhotos = [];
-      try { const s = localStorage.getItem('photos_' + docId); archivedPhotos = s ? JSON.parse(s) : []; } catch(e) {}
-      localStorage.removeItem('photos_' + docId);
+      const archivedPhotos = item.photoDataURLs || [];
       items.splice(idx, 1);
 
-      // Archive to deleted collection (no photos in Firestore, photos in localStorage)
+      // Archive to deleted collection including photos
       const archived = { uid: currentUser.uid, name: item.name, type: item.type,
-        purchase: item.purchase, expiry: item.expiry, deletedAt: Date.now() };
+        purchase: item.purchase, expiry: item.expiry, photoDataURLs: archivedPhotos, deletedAt: Date.now() };
       const dref = await addDoc(collection(db,'deleted'), archived);
-      const archivedItem = { docId: dref.id, ...archived, photoDataURLs: archivedPhotos };
-      if (archivedPhotos.length) {
-        try { localStorage.setItem('photos_deleted_' + dref.id, JSON.stringify(archivedPhotos)); } catch(e) {}
-      }
+      const archivedItem = { docId: dref.id, ...archived };
       deletedItems.unshift(archivedItem);
 
       renderItems();
@@ -646,17 +687,9 @@
       await updateDoc(doc(db,'items',editingDocId), {
         name, type: editType,
         purchase: cal['edit-purchase'].selected,
-        expiry:   cal['edit-expiry'].selected
+        expiry:   cal['edit-expiry'].selected,
+        photoDataURLs: finalDataURLs
       });
-
-      // Update localStorage photos
-      try {
-        if (finalDataURLs.length) {
-          localStorage.setItem('photos_' + editingDocId, JSON.stringify(finalDataURLs));
-        } else {
-          localStorage.removeItem('photos_' + editingDocId);
-        }
-      } catch(e) { showToast('Photos too large for local storage — try smaller images.'); }
 
       const idx = items.findIndex(function(i) { return i.docId === editingDocId; });
       if (idx !== -1) {
@@ -782,17 +815,14 @@
     const it = deletedItems[idx];
     if (!it) return;
     try {
+      const photos = it.photoDataURLs || [];
       const docRef = await addDoc(collection(db,'items'), {
         uid: currentUser.uid, name: it.name, type: it.type,
-        purchase: it.purchase, expiry: it.expiry, createdAt: Date.now()
+        purchase: it.purchase, expiry: it.expiry,
+        photoDataURLs: photos, createdAt: Date.now()
       });
-      const photos = it.photoDataURLs || [];
-      if (photos.length) {
-        try { localStorage.setItem('photos_' + docRef.id, JSON.stringify(photos)); } catch(e) {}
-      }
-      // Remove from deleted collection in Firestore and localStorage
+      // Remove from deleted collection in Firestore
       await deleteDoc(doc(db,'deleted', it.docId));
-      localStorage.removeItem('photos_deleted_' + it.docId);
 
       items.unshift({ docId: docRef.id, uid: currentUser.uid, name: it.name, type: it.type,
         purchase: it.purchase, expiry: it.expiry, photoDataURLs: photos, createdAt: Date.now() });
@@ -1053,6 +1083,11 @@
   // Auth
   document.getElementById('google-btn').addEventListener('click', signInWithGoogle);
   document.getElementById('signout-btn').addEventListener('click', doSignOut);
+  document.getElementById('account-chip').addEventListener('click', function(e) {
+    e.stopPropagation();
+    document.getElementById('account-dropdown').classList.toggle('open');
+  });
+  document.addEventListener('click', function() { closeAccountDropdown(); });
 
   // Theme
   document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
