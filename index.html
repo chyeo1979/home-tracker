@@ -87,7 +87,7 @@
     .date-input-btn:hover, .date-input-btn.open { border-color: var(--text-primary); }
     .date-input-btn .cal-icon { font-size: 14px; opacity: 0.45; }
     .date-input-btn .placeholder { color: var(--text-secondary); }
-    .cal-popup { display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 300; background: var(--bg-primary); border: 0.5px solid var(--border-mid); border-radius: var(--radius-lg); padding: 14px; width: 272px; box-shadow: 0 6px 24px rgba(0,0,0,0.14); }
+    .cal-popup { display: none; position: fixed; z-index: 600; background: var(--bg-primary); border: 0.5px solid var(--border-mid); border-radius: var(--radius-lg); padding: 14px; width: 272px; box-shadow: 0 6px 24px rgba(0,0,0,0.18); }
     .cal-popup.open { display: block; }
     .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 4px; }
     .cal-nav-btn { background: none; border: none; cursor: pointer; color: var(--text-primary); font-size: 18px; padding: 2px 8px; border-radius: var(--radius-md); transition: background 0.1s; line-height: 1; flex-shrink: 0; }
@@ -202,6 +202,9 @@
     .history-empty { text-align: center; padding: 2rem 1rem; color: var(--text-secondary); font-size: 14px; }
     .restore-btn { flex-shrink: 0; padding: 5px 11px; font-size: 12px; font-family: var(--font); font-weight: 500; color: var(--accent-dark); background: var(--accent-bg); border: 1px solid var(--accent); border-radius: var(--radius-md); cursor: pointer; transition: opacity 0.15s; white-space: nowrap; }
     .restore-btn:hover { opacity: 0.8; }
+    .clear-bin-btn { flex-shrink: 0; padding: 5px 11px; font-size: 12px; font-family: var(--font); font-weight: 500; color: #A32D2D; background: none; border: 1px solid #F09595; border-radius: var(--radius-md); cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+    .clear-bin-btn:hover { background: #FCEBEB; }
+    .clear-bin-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
     /* Lightbox */
     .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; align-items: center; justify-content: center; cursor: zoom-out; }
@@ -400,7 +403,10 @@
       <h2>🗑️ Recently removed</h2>
       <button class="modal-close" id="history-modal-close">✕</button>
     </div>
-    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:1rem;">Items removed in the last 30 days.</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+      <p style="font-size:13px;color:var(--text-secondary);">Items removed in the last 30 days.</p>
+      <button class="clear-bin-btn" id="clear-bin-btn">Clear all</button>
+    </div>
     <div id="history-list"></div>
   </div>
 </div>
@@ -419,6 +425,8 @@
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getStorage, ref, uploadString, getDownloadURL, deleteObject }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
 
   const firebaseConfig = {
@@ -433,6 +441,7 @@
   const app      = initializeApp(firebaseConfig);
   const auth     = getAuth(app);
   const db       = getFirestore(app);
+  const storage  = getStorage(app);
 
   const provider = new GoogleAuthProvider();
 
@@ -514,7 +523,8 @@
       const snap = await getDocs(q);
       items = snap.docs.map(function(d) {
         var data = Object.assign({ docId: d.id }, d.data());
-        if (!data.photoDataURLs) data.photoDataURLs = [];
+        if (!data.photoURLs) data.photoURLs = [];
+        if (!data.photoStoragePaths) data.photoStoragePaths = [];
         return data;
       });
       // Sort by createdAt descending in JS (no index needed)
@@ -526,7 +536,8 @@
       const cutoff = Date.now() - 30*24*60*60*1000;
       deletedItems = dsnap.docs.map(function(d){
         var data = Object.assign({ docId: d.id }, d.data());
-        if (!data.photoDataURLs) data.photoDataURLs = [];
+        if (!data.photoURLs) data.photoURLs = [];
+        if (!data.photoStoragePaths) data.photoStoragePaths = [];
         return data;
       }).filter(function(i){ return i.deletedAt >= cutoff; });
       // Sort by deletedAt descending in JS
@@ -548,6 +559,22 @@
     });
   }
 
+  /* ── Photo upload helpers ── */
+  async function uploadPhoto(file, path) {
+    const dataURL = await readFileAsDataURL(file);
+    const storageRef = ref(storage, path);
+    await uploadString(storageRef, dataURL, 'data_url');
+    return await getDownloadURL(storageRef);
+  }
+
+  async function deleteStoragePhoto(storagePath) {
+    if (!storagePath) return;
+    try {
+      const storageRef = ref(storage, storagePath);
+      await deleteObject(storageRef);
+    } catch(e) { /* ignore if already gone */ }
+  }
+
   /* ── Add item ── */
   window.addItem = async function() {
     const name = document.getElementById('f-name').value.trim();
@@ -562,12 +589,15 @@
     btn.disabled = true; btn.textContent = 'Saving…';
 
     try {
-      // Convert photos to base64 locally
-      const photoDataURLs = [];
+      // Upload photos to Firebase Storage
+      const photoURLs = [];
+      const photoStoragePaths = [];
       for (let i = 0; i < addPhotos.length; i++) {
-        prog.textContent = 'Processing photo ' + (i+1) + ' of ' + addPhotos.length + '…';
-        const dataURL = await readFileAsDataURL(addPhotos[i].file);
-        photoDataURLs.push(dataURL);
+        prog.textContent = 'Uploading photo ' + (i+1) + ' of ' + addPhotos.length + '…';
+        const path = 'photos/' + currentUser.uid + '/' + Date.now() + '_' + i;
+        const url = await uploadPhoto(addPhotos[i].file, path);
+        photoURLs.push(url);
+        photoStoragePaths.push(path);
       }
 
       prog.textContent = 'Saving…';
@@ -575,13 +605,13 @@
         uid: currentUser.uid, name, type: currentType,
         purchase: cal['purchase'].selected,
         expiry:   cal['expiry'].selected,
-        photoDataURLs,
+        photoURLs, photoStoragePaths,
         createdAt: Date.now()
       });
 
       items.unshift({ docId: docRef.id, uid: currentUser.uid, name, type: currentType,
         purchase: cal['purchase'].selected, expiry: cal['expiry'].selected,
-        photoDataURLs, createdAt: Date.now() });
+        photoURLs, photoStoragePaths, createdAt: Date.now() });
 
       prog.textContent = '';
       closeAddModal();
@@ -603,15 +633,16 @@
     const item = items[idx];
     try {
       await deleteDoc(doc(db,'items',docId));
-      const archivedPhotos = item.photoDataURLs || [];
+      const archivedURLs  = item.photoURLs || [];
+      const archivedPaths = item.photoStoragePaths || [];
       items.splice(idx, 1);
 
-      // Archive to deleted collection including photos
+      // Archive to deleted collection — keep Storage URLs so they remain accessible
       const archived = { uid: currentUser.uid, name: item.name, type: item.type,
-        purchase: item.purchase, expiry: item.expiry, photoDataURLs: archivedPhotos, deletedAt: Date.now() };
+        purchase: item.purchase, expiry: item.expiry,
+        photoURLs: archivedURLs, photoStoragePaths: archivedPaths, deletedAt: Date.now() };
       const dref = await addDoc(collection(db,'deleted'), archived);
-      const archivedItem = { docId: dref.id, ...archived };
-      deletedItems.unshift(archivedItem);
+      deletedItems.unshift({ docId: dref.id, ...archived });
 
       renderItems();
       showToast('"' + item.name + '" removed.');
@@ -638,9 +669,9 @@
       else { sp.textContent = 'Select date'; sp.classList.add('placeholder'); }
     });
 
-    // editPhotos = existing local base64 photos
-    editPhotos = (it.photoDataURLs || []).map(function(url) {
-      return { url: url, file: null };
+    // editPhotos: existing items have { url: storageURL, storagePath, file: null }
+    editPhotos = (it.photoURLs || []).map(function(url, i) {
+      return { url: url, storagePath: (it.photoStoragePaths || [])[i] || null, file: null };
     });
     refreshEditPhotoPreview();
     setupCameraButtons();
@@ -671,15 +702,25 @@
     btn.disabled = true; btn.textContent = 'Saving…';
 
     try {
-      // Build final photo list (existing base64 + new files converted)
-      const finalDataURLs = [];
+      const origItem = items.find(function(i){ return i.docId === editingDocId; });
+      const origPaths = origItem ? (origItem.photoStoragePaths || []) : [];
+      const keptPaths = editPhotos.filter(function(ep){ return !ep.file; }).map(function(ep){ return ep.storagePath; });
+      // Delete Storage files that were removed by user
+      const removedPaths = origPaths.filter(function(p){ return p && !keptPaths.includes(p); });
+      await Promise.all(removedPaths.map(function(p){ return deleteStoragePhoto(p); }));
+
+      // Build final URL + path lists
+      const finalURLs = [], finalPaths = [];
+      let newIdx = 0;
       for (let i = 0; i < editPhotos.length; i++) {
         const ep = editPhotos[i];
         if (ep.file) {
-          prog.textContent = 'Processing photo ' + (i+1) + '…';
-          finalDataURLs.push(await readFileAsDataURL(ep.file));
+          prog.textContent = 'Uploading photo ' + (++newIdx) + '…';
+          const path = 'photos/' + currentUser.uid + '/' + Date.now() + '_edit_' + i;
+          const url = await uploadPhoto(ep.file, path);
+          finalURLs.push(url); finalPaths.push(path);
         } else {
-          finalDataURLs.push(ep.url); // existing base64
+          finalURLs.push(ep.url); finalPaths.push(ep.storagePath);
         }
       }
 
@@ -688,14 +729,14 @@
         name, type: editType,
         purchase: cal['edit-purchase'].selected,
         expiry:   cal['edit-expiry'].selected,
-        photoDataURLs: finalDataURLs
+        photoURLs: finalURLs, photoStoragePaths: finalPaths
       });
 
       const idx = items.findIndex(function(i) { return i.docId === editingDocId; });
       if (idx !== -1) {
         items[idx] = Object.assign({}, items[idx], { name, type: editType,
           purchase: cal['edit-purchase'].selected, expiry: cal['edit-expiry'].selected,
-          photoDataURLs: finalDataURLs });
+          photoURLs: finalURLs, photoStoragePaths: finalPaths });
       }
 
       prog.textContent = '';
@@ -793,7 +834,7 @@
     list.innerHTML = deletedItems.map(function(it,i) {
       const daysAgo = Math.round((Date.now() - it.deletedAt) / 86400000);
       const ago = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : daysAgo + ' days ago';
-      const photos = it.photoDataURLs || [];
+      const photos = it.photoURLs || [];
       const thumbHtml = photos.length
         ? '<img class="history-thumb" src="' + photos[0] + '" alt="' + it.name + '" />'
         : '<div class="history-no-thumb">' + (it.type==='food'?'🥦':'🏠') + '</div>';
@@ -815,17 +856,17 @@
     const it = deletedItems[idx];
     if (!it) return;
     try {
-      const photos = it.photoDataURLs || [];
+      const photos = it.photoURLs || [];
+      const paths  = it.photoStoragePaths || [];
       const docRef = await addDoc(collection(db,'items'), {
         uid: currentUser.uid, name: it.name, type: it.type,
         purchase: it.purchase, expiry: it.expiry,
-        photoDataURLs: photos, createdAt: Date.now()
+        photoURLs: photos, photoStoragePaths: paths, createdAt: Date.now()
       });
-      // Remove from deleted collection in Firestore
       await deleteDoc(doc(db,'deleted', it.docId));
 
       items.unshift({ docId: docRef.id, uid: currentUser.uid, name: it.name, type: it.type,
-        purchase: it.purchase, expiry: it.expiry, photoDataURLs: photos, createdAt: Date.now() });
+        purchase: it.purchase, expiry: it.expiry, photoURLs: photos, photoStoragePaths: paths, createdAt: Date.now() });
       deletedItems.splice(idx, 1);
 
       renderHistory();
@@ -837,7 +878,27 @@
     }
   }
 
-  
+  async function clearBin() {
+    if (!deletedItems.length) return;
+    const btn = document.getElementById('clear-bin-btn');
+    btn.disabled = true; btn.textContent = 'Clearing…';
+    try {
+      // Delete Firestore docs and Storage files
+      const deletes = deletedItems.flatMap(function(it) {
+        const firestoreDel = deleteDoc(doc(db,'deleted',it.docId));
+        const storageDels  = (it.photoStoragePaths || []).map(function(p){ return deleteStoragePhoto(p); });
+        return [firestoreDel, ...storageDels];
+      });
+      await Promise.all(deletes);
+      deletedItems = [];
+      renderHistory();
+    } catch(e) {
+      showToast('Error clearing bin.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Clear all';
+    }
+  }
+
   function getStatus(expiry) {
     if (!expiry) return 'ok';
     const diff = Math.round((new Date(expiry+'T00:00:00') - todayMidnight()) / 86400000);
@@ -908,7 +969,7 @@
       const bc = st==='expired'?'badge-exp':st==='soon'?'badge-warn':'badge-ok';
       const dl = daysLabel(it.expiry);
       const expLbl = it.type==='food'?'Expiry':'Warranty expiry';
-      const photoList = it.photoDataURLs || [];
+      const photoList = it.photoURLs || [];
       const thumbsHtml = photoList.length
         ? '<div class="item-thumbs">' + photoList.map(function(p){ return '<img class="item-thumb" src="' + p + '" alt="' + it.name + '" data-src="' + p + '"/>'; }).join('') + '</div>'
         : '<div class="item-no-thumb">' + (it.type==='food'?'🥦':'🏠') + '</div>';
@@ -993,7 +1054,19 @@
     const popup = document.getElementById('cal-'+id);
     const wasOpen = popup.classList.contains('open');
     closeAllCals();
-    if (!wasOpen) { popup.classList.add('open'); document.getElementById('btn-'+id).classList.add('open'); renderCal(id); }
+    if (!wasOpen) {
+      const btn = document.getElementById('btn-'+id);
+      const rect = btn.getBoundingClientRect();
+      // Position below the button; flip left if too close to right edge
+      const popupW = 272;
+      let left = rect.left;
+      if (left + popupW > window.innerWidth - 8) left = rect.right - popupW;
+      popup.style.top  = (rect.bottom + 6) + 'px';
+      popup.style.left = Math.max(8, left) + 'px';
+      popup.classList.add('open');
+      btn.classList.add('open');
+      renderCal(id);
+    }
   };
   function renderCal(id) {
     const s = cal[id], popup = document.getElementById('cal-'+id);
@@ -1134,6 +1207,7 @@
   // History modal
   document.getElementById('history-modal-close').addEventListener('click', closeHistoryModal);
   document.getElementById('history-modal').addEventListener('click', function(e){ if(e.target===this) closeHistoryModal(); });
+  document.getElementById('clear-bin-btn').addEventListener('click', clearBin);
 
   // Lightbox
   document.getElementById('lightbox').addEventListener('click', closeLightbox);
