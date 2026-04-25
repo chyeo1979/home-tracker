@@ -243,7 +243,7 @@
 
     <div class="search-row">
       <span class="search-icon">🔍</span>
-      <input type="text" id="search-input" placeholder="Search items…" id="search-input-field" />
+      <input type="text" id="search-input-field" placeholder="Search items…" />
       <button class="search-clear" id="search-clear">✕</button>
     </div>
     <div class="filter-row">
@@ -287,11 +287,13 @@
         <label>Purchase date</label>
         <button class="date-input-btn" id="btn-purchase"><span id="display-purchase" class="placeholder">Select date</span><span class="cal-icon">📅</span></button>
         <div class="cal-popup" id="cal-purchase"></div>
+        <div class="date-error" id="err-purchase">Purchase date can't be in the future.</div>
       </div>
       <div class="field date-field">
         <label id="lbl-expiry">Expiry date</label>
         <button class="date-input-btn" id="btn-expiry"><span id="display-expiry" class="placeholder">Select date</span><span class="cal-icon">📅</span></button>
         <div class="cal-popup" id="cal-expiry"></div>
+        <div class="date-error" id="err-expiry">Expiry can't be before purchase date.</div>
       </div>
     </div>
     <div class="field">
@@ -330,11 +332,13 @@
         <label>Purchase date</label>
         <button class="date-input-btn" id="btn-edit-purchase"><span id="display-edit-purchase" class="placeholder">Select date</span><span class="cal-icon">📅</span></button>
         <div class="cal-popup" id="cal-edit-purchase"></div>
+        <div class="date-error" id="err-edit-purchase">Purchase date can't be in the future.</div>
       </div>
       <div class="field date-field">
         <label id="edit-lbl-expiry">Expiry date</label>
         <button class="date-input-btn" id="btn-edit-expiry"><span id="display-edit-expiry" class="placeholder">Select date</span><span class="cal-icon">📅</span></button>
         <div class="cal-popup" id="cal-edit-expiry"></div>
+        <div class="date-error" id="err-edit-expiry">Expiry can't be before purchase date.</div>
       </div>
     </div>
     <div class="field">
