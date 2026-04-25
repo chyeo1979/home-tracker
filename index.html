@@ -140,8 +140,9 @@
     .search-row .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 15px; opacity: 0.4; pointer-events: none; }
     .search-clear { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 16px; color: var(--text-secondary); cursor: pointer; line-height: 1; padding: 2px; display: none; }
     .search-clear.visible { display: block; }
-    .filter-row { display: flex; gap: 8px; margin-bottom: 1rem; }
-    .filter-row select { flex: 1; padding: 8px 10px; font-size: 13px; font-family: var(--font); border: 0.5px solid var(--border-mid); border-radius: var(--radius-md); background: var(--bg-primary); color: var(--text-primary); outline: none; }
+    .filter-row { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+    .filter-row select { flex: 1; min-width: calc(50% - 4px); padding: 8px 10px; font-size: 13px; font-family: var(--font); border: 0.5px solid var(--border-mid); border-radius: var(--radius-md); background: var(--bg-primary); color: var(--text-primary); outline: none; box-sizing: border-box; }
+    @media (max-width: 480px) { .filter-row select { min-width: calc(50% - 4px); } .filter-row select:last-child { min-width: 100%; } }
 
     /* Expiry banner */
     .expiry-banner { display: none; border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 1.25rem; }
@@ -297,7 +298,8 @@
       </select>
       <select id="sort-by">
         <option value="expiry">Expiry: soonest first</option>
-        <option value="purchase">Purchased: newest first</option>
+        <option value="purchase-desc">Purchased: newest first</option>
+        <option value="purchase-asc">Purchased: oldest first</option>
         <option value="name">Name: A–Z</option>
       </select>
     </div>
@@ -978,11 +980,17 @@
         if (!b.expiry) return -1;
         return a.expiry < b.expiry ? -1 : a.expiry > b.expiry ? 1 : 0;
       }
-      if (sortBy === 'purchase') {
+      if (sortBy === 'purchase-desc') {
         if (!a.purchase && !b.purchase) return 0;
         if (!a.purchase) return 1;
         if (!b.purchase) return -1;
         return a.purchase > b.purchase ? -1 : a.purchase < b.purchase ? 1 : 0;
+      }
+      if (sortBy === 'purchase-asc') {
+        if (!a.purchase && !b.purchase) return 0;
+        if (!a.purchase) return 1;
+        if (!b.purchase) return -1;
+        return a.purchase < b.purchase ? -1 : a.purchase > b.purchase ? 1 : 0;
       }
       if (sortBy === 'name') {
         return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
