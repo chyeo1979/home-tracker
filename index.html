@@ -144,18 +144,6 @@
     .filter-row select { flex: 1; padding: 8px 10px; font-size: 13px; font-family: var(--font); border: 0.5px solid var(--border-mid); border-radius: var(--radius-md); background: var(--bg-primary); color: var(--text-primary); outline: none; min-width: 0; }
     @media (max-width: 480px) { .filter-row { gap: 5px; } .filter-row select { padding: 8px 4px; font-size: 11px; } }
 
-    /* Expiry banner */
-    .expiry-banner { display: none; border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 1.25rem; }
-    .expiry-banner.has-expired { display: block; background: #FCEBEB; border: 1px solid #F09595; }
-    .expiry-banner.has-soon { display: block; background: #FEF3E2; border: 1px solid #EF9F27; }
-    .expiry-banner.has-both { display: block; background: #FCEBEB; border: 1px solid #F09595; }
-    .banner-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; color: var(--text-primary); }
-    .banner-lines { display: flex; flex-direction: column; gap: 3px; }
-    .banner-line { font-size: 13px; display: flex; align-items: center; gap: 6px; }
-    .banner-line.line-exp  { color: #A32D2D; }
-    .banner-line.line-soon { color: #854F0B; }
-    .banner-dismiss { float: right; background: none; border: none; font-size: 16px; cursor: pointer; color: var(--text-secondary); line-height: 1; margin-left: 8px; margin-top: -2px; }
-
     /* Item cards */
     .items-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 80px; }
     .item-card { background: var(--bg-primary); border: 0.5px solid var(--border-light); border-radius: var(--radius-lg); padding: 1rem 1.25rem 1rem 1rem; display: flex; gap: 12px; align-items: flex-start; cursor: pointer; position: relative; transition: border-color 0.15s, box-shadow 0.15s; }
@@ -264,13 +252,6 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Expiry banner -->
-    <div class="expiry-banner" id="expiry-banner">
-      <button class="banner-dismiss" id="banner-dismiss">✕</button>
-      <div class="banner-title" id="banner-title"></div>
-      <div class="banner-lines" id="banner-lines"></div>
     </div>
 
     <div class="summary-bar">
@@ -475,7 +456,6 @@
   let editType     = 'food';
   let searchQuery  = '';
   let sortBy       = 'expiry';
-  let bannerDismissed = false;
 
   const cal = {};
   function initCal(id) { const n = new Date(); cal[id] = { year: n.getFullYear(), month: n.getMonth(), selected: null }; }
@@ -931,23 +911,6 @@
     return diff + 'd remaining';
   }
 
-  /* ── Banner ── */
-  window.dismissBanner = function() { bannerDismissed = true; document.getElementById('expiry-banner').className = 'expiry-banner'; };
-  function updateBanner() {
-    if (bannerDismissed) return;
-    const banner = document.getElementById('expiry-banner');
-    const expired = items.filter(function(i){ return getStatus(i.expiry)==='expired'; });
-    const soon    = items.filter(function(i){ return getStatus(i.expiry)==='soon'; });
-    if (!expired.length && !soon.length) { banner.className = 'expiry-banner'; return; }
-    const hasBoth = expired.length > 0 && soon.length > 0;
-    banner.className = 'expiry-banner ' + (hasBoth ? 'has-both' : expired.length ? 'has-expired' : 'has-soon');
-    document.getElementById('banner-title').textContent = '⚠️ Attention needed';
-    var html = '';
-    if (expired.length) html += '<div class="banner-line line-exp">🔴 ' + expired.length + ' item' + (expired.length>1?'s':'') + ' have already expired</div>';
-    if (soon.length)    html += '<div class="banner-line line-soon">🟠 ' + soon.length + ' item' + (soon.length>1?'s':'') + ' expiring within 7 days</div>';
-    document.getElementById('banner-lines').innerHTML = html;
-  }
-
   /* ── Search ── */
   window.onSearch = function(input) {
     searchQuery = input.value.trim().toLowerCase();
@@ -1002,8 +965,6 @@
     document.getElementById('s-total').textContent = items.length;
     document.getElementById('s-exp').textContent   = items.filter(function(i){ return getStatus(i.expiry)==='expired'; }).length;
     document.getElementById('s-soon').textContent  = items.filter(function(i){ return getStatus(i.expiry)==='soon'; }).length;
-    updateBanner();
-
     const list = document.getElementById('items-list');
     if (!filtered.length) {
       list.innerHTML = '<div class="empty"><div class="big">' + (items.length?'🔍':'📦') + '</div>' + (items.length?'No items match your filter.':'No items yet — tap ＋ to add your first one!') + '</div>';
@@ -1215,9 +1176,6 @@
   // FAB buttons
   document.getElementById('fab-add').addEventListener('click', openAddModal);
   document.getElementById('fab-history').addEventListener('click', openHistoryModal);
-
-  // Banner
-  document.getElementById('banner-dismiss').addEventListener('click', dismissBanner);
 
   // Search
   document.getElementById('search-input-field').addEventListener('input', function(){ onSearch(this); });
