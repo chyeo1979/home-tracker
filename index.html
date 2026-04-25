@@ -71,6 +71,9 @@
     .field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 5px; }
     .field input[type="text"] { width: 100%; padding: 8px 10px; font-size: 14px; font-family: var(--font); border: 0.5px solid var(--border-mid); border-radius: var(--radius-md); background: var(--bg-primary); color: var(--text-primary); outline: none; transition: border-color 0.15s; }
     .field input[type="text"]:focus { border-color: var(--text-primary); }
+    .field textarea { width: 100%; padding: 8px 10px; font-size: 14px; font-family: var(--font); border: 0.5px solid var(--border-mid); border-radius: var(--radius-md); background: var(--bg-primary); color: var(--text-primary); outline: none; transition: border-color 0.15s; resize: vertical; min-height: 72px; line-height: 1.5; }
+    .field textarea:focus { border-color: var(--text-primary); }
+    .field textarea::placeholder { color: var(--text-secondary); }
 
     .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
@@ -163,6 +166,7 @@
     .item-no-thumb { width: 50px; height: 50px; border-radius: var(--radius-md); background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; font-size: 22px; }
     .item-info { flex: 1; min-width: 0; padding-right: 20px; }
     .item-name { font-size: 15px; font-weight: 500; margin-bottom: 2px; }
+    .item-note { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; white-space: pre-wrap; line-height: 1.4; }
     .item-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 7px; }
     .item-badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
     .badge { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 99px; }
@@ -321,6 +325,7 @@
       </div>
     </div>
     <div class="field"><label>Item name</label><input type="text" id="f-name" placeholder="e.g. Milk, Microwave…" /></div>
+    <div class="field"><label>Note <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label><textarea id="f-note" placeholder="e.g. Keep refrigerated, receipt in drawer…" rows="3"></textarea></div>
     <div class="row2">
       <div class="field date-field">
         <label>Purchase date</label>
@@ -366,6 +371,7 @@
       </div>
     </div>
     <div class="field"><label>Item name</label><input type="text" id="edit-name" placeholder="Item name" /></div>
+    <div class="field"><label>Note <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label><textarea id="edit-note" placeholder="e.g. Keep refrigerated, receipt in drawer…" rows="3"></textarea></div>
     <div class="row2">
       <div class="field date-field">
         <label>Purchase date</label>
@@ -584,6 +590,7 @@
       showToast('Please fix the date errors first.'); return;
     }
 
+    const note = document.getElementById('f-note').value.trim();
     const btn  = document.getElementById('add-save-btn');
     const prog = document.getElementById('add-progress');
     btn.disabled = true; btn.textContent = 'Saving…';
@@ -602,14 +609,14 @@
 
       prog.textContent = 'Saving…';
       const docRef = await addDoc(collection(db,'items'), {
-        uid: currentUser.uid, name, type: currentType,
+        uid: currentUser.uid, name, type: currentType, note,
         purchase: cal['purchase'].selected,
         expiry:   cal['expiry'].selected,
         photoURLs, photoStoragePaths,
         createdAt: Date.now()
       });
 
-      items.unshift({ docId: docRef.id, uid: currentUser.uid, name, type: currentType,
+      items.unshift({ docId: docRef.id, uid: currentUser.uid, name, type: currentType, note,
         purchase: cal['purchase'].selected, expiry: cal['expiry'].selected,
         photoURLs, photoStoragePaths, createdAt: Date.now() });
 
@@ -656,6 +663,7 @@
     editingDocId = docId;
     editType = it.type;
     document.getElementById('edit-name').value = it.name;
+    document.getElementById('edit-note').value = it.note || '';
     editSelectType(it.type);
 
     ['edit-purchase','edit-expiry'].forEach(function(calId) {
@@ -691,6 +699,7 @@
 
   window.saveEdit = async function() {
     const name = document.getElementById('edit-name').value.trim();
+    const note = document.getElementById('edit-note').value.trim();
     if (!name) { showToast('Please enter an item name.'); return; }
     if (document.getElementById('err-edit-purchase').classList.contains('visible') ||
         document.getElementById('err-edit-expiry').classList.contains('visible')) {
@@ -726,7 +735,7 @@
 
       prog.textContent = 'Saving…';
       await updateDoc(doc(db,'items',editingDocId), {
-        name, type: editType,
+        name, type: editType, note,
         purchase: cal['edit-purchase'].selected,
         expiry:   cal['edit-expiry'].selected,
         photoURLs: finalURLs, photoStoragePaths: finalPaths
@@ -734,7 +743,7 @@
 
       const idx = items.findIndex(function(i) { return i.docId === editingDocId; });
       if (idx !== -1) {
-        items[idx] = Object.assign({}, items[idx], { name, type: editType,
+        items[idx] = Object.assign({}, items[idx], { name, type: editType, note,
           purchase: cal['edit-purchase'].selected, expiry: cal['edit-expiry'].selected,
           photoURLs: finalURLs, photoStoragePaths: finalPaths });
       }
@@ -806,6 +815,7 @@
   window.openAddModal = function() {
     currentType = 'food'; selectType('food');
     document.getElementById('f-name').value = '';
+    document.getElementById('f-note').value = '';
     clearDate(null,'purchase'); clearDate(null,'expiry');
     ['err-purchase','err-expiry'].forEach(function(id){ var el=document.getElementById(id); if(el){el.classList.remove('visible');} });
     ['btn-purchase','btn-expiry'].forEach(function(id){ var el=document.getElementById(id); if(el){el.classList.remove('error');} });
@@ -978,6 +988,7 @@
         thumbsHtml +
         '<div class="item-info">' +
           '<div class="item-name">' + it.name + '</div>' +
+          (it.note ? '<div class="item-note">' + it.note + '</div>' : '') +
           '<div class="item-meta">Bought: ' + fmtDate(it.purchase) + ' &nbsp;·&nbsp; ' + expLbl + ': ' + fmtDate(it.expiry) + '</div>' +
           '<div class="item-badges"><span class="badge badge-type">' + (it.type==='food'?'Food':'Household') + '</span>' +
           (dl ? '<span class="badge ' + bc + '">' + dl + '</span>' : '') + '</div>' +
