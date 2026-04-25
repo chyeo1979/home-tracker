@@ -295,6 +295,12 @@
         <option value="soon">Expiring soon</option>
         <option value="expired">Expired</option>
       </select>
+      <select id="sort-by">
+        <option value="expiry">Expiry ↑</option>
+        <option value="purchase">Purchased ↓</option>
+        <option value="name">Name A–Z</option>
+        <option value="added">Date added ↓</option>
+      </select>
     </div>
 
     <div class="items-list" id="items-list"><div class="loading-screen">Loading your items…</div></div>
@@ -467,6 +473,7 @@
   let editingDocId = null;
   let editType     = 'food';
   let searchQuery  = '';
+  let sortBy       = 'expiry';
   let bannerDismissed = false;
 
   const cal = {};
@@ -963,6 +970,28 @@
       return true;
     });
 
+    // Sort
+    filtered.sort(function(a, b) {
+      if (sortBy === 'expiry') {
+        // No expiry floats to bottom; otherwise soonest first
+        if (!a.expiry && !b.expiry) return 0;
+        if (!a.expiry) return 1;
+        if (!b.expiry) return -1;
+        return a.expiry < b.expiry ? -1 : a.expiry > b.expiry ? 1 : 0;
+      }
+      if (sortBy === 'purchase') {
+        if (!a.purchase && !b.purchase) return 0;
+        if (!a.purchase) return 1;
+        if (!b.purchase) return -1;
+        return a.purchase > b.purchase ? -1 : a.purchase < b.purchase ? 1 : 0;
+      }
+      if (sortBy === 'name') {
+        return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+      }
+      // 'added' — newest createdAt first
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    });
+
     document.getElementById('s-total').textContent = items.length;
     document.getElementById('s-exp').textContent   = items.filter(function(i){ return getStatus(i.expiry)==='expired'; }).length;
     document.getElementById('s-soon').textContent  = items.filter(function(i){ return getStatus(i.expiry)==='soon'; }).length;
@@ -1190,6 +1219,7 @@
   // Filters
   document.getElementById('filter-type').addEventListener('change', renderItems);
   document.getElementById('filter-status').addEventListener('change', renderItems);
+  document.getElementById('sort-by').addEventListener('change', function(){ sortBy = this.value; renderItems(); });
 
   // Add modal
   document.getElementById('add-modal-close').addEventListener('click', closeAddModal);
