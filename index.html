@@ -568,7 +568,13 @@
   let editingDocId = null;
   let editType     = 'food';
   let searchQuery  = '';
-  let sortBy       = localStorage.getItem('hometracker-sortby') || 'expiry';
+  // Safe localStorage wrapper — Brave shields can block storage access
+  const store = {
+    get: function(key) { try { return localStorage.getItem(key); } catch(e) { return null; } },
+    set: function(key, val) { try { localStorage.setItem(key, val); } catch(e) {} }
+  };
+
+  let sortBy = store.get('hometracker-sortby') || 'expiry';
 
   // Shopping list state
   let shopItems    = [];   // { docId, name, qty, note, checked, addedToInventory }
@@ -1704,12 +1710,12 @@
   window.toggleTheme = function() {
     const isDark = document.documentElement.hasAttribute('data-theme');
     applyTheme(!isDark);
-    localStorage.setItem('hometracker-theme', !isDark ? 'dark' : 'light');
+    store.set('hometracker-theme', !isDark ? 'dark' : 'light');
   };
 
   // Init theme — use saved preference, fallback to OS preference
   (function() {
-    const saved = localStorage.getItem('hometracker-theme');
+    const saved = store.get('hometracker-theme');
     if (saved) {
       applyTheme(saved === 'dark');
     } else {
@@ -1747,7 +1753,7 @@
   // Filters
   document.getElementById('filter-type').addEventListener('change', renderItems);
   document.getElementById('filter-status').addEventListener('change', renderItems);
-  document.getElementById('sort-by').addEventListener('change', function(){ sortBy = this.value; localStorage.setItem('hometracker-sortby', sortBy); renderItems(); });
+  document.getElementById('sort-by').addEventListener('change', function(){ sortBy = this.value; store.set('hometracker-sortby', sortBy); renderItems(); });
 
   // Add modal
   document.getElementById('add-modal-close').addEventListener('click', closeAddModal);
