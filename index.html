@@ -209,6 +209,50 @@
     .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--text-primary); color: var(--bg-primary); padding: 10px 20px; border-radius: var(--radius-md); font-size: 14px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; white-space: nowrap; }
     .toast.show { opacity: 1; }
 
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; background: var(--bg-secondary); border-radius: var(--radius-lg); padding: 4px; }
+    .tab-btn { flex: 1; padding: 8px 12px; border: none; border-radius: var(--radius-md); background: none; font-size: 14px; font-family: var(--font); color: var(--text-secondary); cursor: pointer; transition: all 0.15s; font-weight: 500; }
+    .tab-btn.active { background: var(--bg-primary); color: var(--text-primary); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+    /* Shopping list */
+    .shop-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 80px; }
+    .shop-item { background: var(--bg-primary); border: 0.5px solid var(--border-light); border-radius: var(--radius-lg); padding: 12px 14px; display: flex; align-items: center; gap: 12px; transition: border-color 0.15s; }
+    .shop-item.checked { opacity: 0.55; }
+    .shop-item.done-added { border-color: var(--accent); background: var(--accent-bg); opacity: 1; }
+    .shop-cb { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border-mid); background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; font-size: 12px; color: transparent; }
+    .shop-cb.checked { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .shop-item-info { flex: 1; min-width: 0; }
+    .shop-item-name { font-size: 15px; font-weight: 500; transition: text-decoration 0.15s; }
+    .shop-item.checked .shop-item-name { text-decoration: line-through; }
+    .shop-item-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .shop-item-added-badge { font-size: 11px; font-weight: 500; color: var(--accent-dark); background: none; white-space: nowrap; flex-shrink: 0; }
+    .shop-item-del { width: 22px; height: 22px; border-radius: 50%; background: var(--bg-secondary); border: 0.5px solid var(--border-light); color: var(--text-secondary); font-size: 10px; line-height: 22px; text-align: center; cursor: pointer; padding: 0; font-family: var(--font); transition: background 0.12s; flex-shrink: 0; }
+    .shop-item-del:hover { background: #FCEBEB; color: #A32D2D; border-color: #F09595; }
+    .shop-done-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+    .shop-done-btn { padding: 9px 18px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-md); font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--font); transition: opacity 0.15s; }
+    .shop-done-btn:hover { opacity: 0.87; }
+    .shop-done-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .shop-count { font-size: 13px; color: var(--text-secondary); }
+
+    /* Checkout modal */
+    .checkout-item { background: var(--bg-secondary); border: 0.5px solid var(--border-light); border-radius: var(--radius-lg); padding: 14px; margin-bottom: 12px; }
+    .checkout-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 8px; }
+    .checkout-item-name { font-size: 15px; font-weight: 600; }
+    .checkout-item-qty { font-size: 13px; color: var(--text-secondary); white-space: nowrap; }
+    .checkout-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 480px) { .checkout-fields { grid-template-columns: 1fr; } }
+    .checkout-field label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+    .checkout-field input[type="text"] { width: 100%; padding: 7px 9px; font-size: 13px; font-family: var(--font); border: 0.5px solid var(--border-mid); border-radius: var(--radius-md); background: var(--bg-primary); color: var(--text-primary); outline: none; }
+    .checkout-field input[type="text"]:focus { border-color: var(--text-primary); }
+    .checkout-counter { display: flex; align-items: center; gap: 6px; }
+    .checkout-counter button { width: 28px; height: 28px; border-radius: 50%; border: 0.5px solid var(--border-mid); background: var(--bg-primary); color: var(--text-primary); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; flex-shrink: 0; }
+    .checkout-counter span { font-size: 15px; font-weight: 500; min-width: 24px; text-align: center; }
+    .checkout-progress { font-size: 12px; color: var(--text-secondary); }
+    .shop-field input[type="number"] { width: 70px; padding: 8px 10px; font-size: 14px; font-family: var(--font); border: 0.5px solid var(--border-mid); border-radius: var(--radius-md); background: var(--bg-primary); color: var(--text-primary); outline: none; }
+    .qty-row { display: flex; align-items: center; gap: 10px; }
+    .qty-row .field { flex: 1; margin-bottom: 0; }
+    .qty-field { width: 90px !important; }
+
     @media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -260,32 +304,49 @@
       <div class="stat"><div class="stat-num" id="s-soon" style="color:#C47A1A">0</div><div class="stat-lbl">Expiring soon</div></div>
     </div>
 
-    <div class="search-row">
-      <span class="search-icon">🔍</span>
-      <input type="text" id="search-input-field" placeholder="Search items…" />
-      <button class="search-clear" id="search-clear">✕</button>
-    </div>
-    <div class="filter-row">
-      <select id="filter-type">
-        <option value="">All types</option>
-        <option value="food">Food</option>
-        <option value="household">Household</option>
-      </select>
-      <select id="filter-status">
-        <option value="">All statuses</option>
-        <option value="ok">Good</option>
-        <option value="soon">Expiring soon</option>
-        <option value="expired">Expired</option>
-      </select>
-      <select id="sort-by">
-        <option value="expiry">Expiry ↑</option>
-        <option value="purchase-desc">Purchased ↓</option>
-        <option value="purchase-asc">Purchased ↑</option>
-        <option value="name">Name A–Z</option>
-      </select>
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-inventory">🏠 Inventory</button>
+      <button class="tab-btn" id="tab-shopping">🛒 Shopping list</button>
     </div>
 
-    <div class="items-list" id="items-list"><div class="loading-screen">Loading your items…</div></div>
+    <!-- Inventory view -->
+    <div id="view-inventory">
+      <div class="search-row">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input-field" placeholder="Search items…" />
+        <button class="search-clear" id="search-clear">✕</button>
+      </div>
+      <div class="filter-row">
+        <select id="filter-type">
+          <option value="">All types</option>
+          <option value="food">Food</option>
+          <option value="household">Household</option>
+        </select>
+        <select id="filter-status">
+          <option value="">All statuses</option>
+          <option value="ok">Good</option>
+          <option value="soon">Expiring soon</option>
+          <option value="expired">Expired</option>
+        </select>
+        <select id="sort-by">
+          <option value="expiry">Expiry ↑</option>
+          <option value="purchase-desc">Purchased ↓</option>
+          <option value="purchase-asc">Purchased ↑</option>
+          <option value="name">Name A–Z</option>
+        </select>
+      </div>
+      <div class="items-list" id="items-list"><div class="loading-screen">Loading your items…</div></div>
+    </div>
+
+    <!-- Shopping list view -->
+    <div id="view-shopping" style="display:none;">
+      <div class="shop-done-bar">
+        <span class="shop-count" id="shop-count">0 items</span>
+        <button class="shop-done-btn" id="shop-done-btn" disabled>Done Shopping</button>
+      </div>
+      <div class="shop-list" id="shop-list"><div class="empty"><div class="big">🛒</div>Your shopping list is empty — tap ＋ to add items.</div></div>
+    </div>
 
   </div>
 </div>
@@ -405,6 +466,42 @@
   </div>
 </div>
 
+<!-- ADD SHOPPING ITEM MODAL -->
+<div class="modal-overlay" id="shop-add-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Add to shopping list</h2>
+      <button class="modal-close" id="shop-add-close">✕</button>
+    </div>
+    <div class="field"><label>Item name</label><input type="text" id="shop-f-name" placeholder="e.g. Milk, Eggs…" /></div>
+    <div class="qty-row">
+      <div class="field"><label>Quantity <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label><input type="text" id="shop-f-qty" placeholder="e.g. 2, 500g…" class="qty-field" /></div>
+    </div>
+    <div class="field"><label>Note <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label><textarea id="shop-f-note" placeholder="e.g. Full cream, brand preference…" rows="2"></textarea></div>
+    <div class="modal-actions">
+      <button class="cancel-btn" id="shop-add-cancel">Cancel</button>
+      <button class="save-btn" id="shop-add-save">Add to list</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="modal-overlay" id="checkout-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Done Shopping</h2>
+      <button class="modal-close" id="checkout-close">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:1rem;">Optionally set expiry dates, then add all to your inventory.</p>
+    <div id="checkout-items-list"></div>
+    <div class="upload-progress" id="checkout-progress"></div>
+    <div class="modal-actions">
+      <button class="cancel-btn" id="checkout-cancel">Cancel</button>
+      <button class="save-btn" id="checkout-save-btn">Add All to Inventory</button>
+    </div>
+  </div>
+</div>
+
 <!-- Lightbox -->
 <div class="lightbox" id="lightbox">
   <button class="lightbox-close" id="lightbox-close">✕</button>
@@ -457,6 +554,10 @@
   let searchQuery  = '';
   let sortBy       = 'expiry';
 
+  // Shopping list state
+  let shopItems    = [];   // { docId, name, qty, note, checked, addedToInventory }
+  let activeTab    = 'inventory';
+
   const cal = {};
   function initCal(id) { const n = new Date(); cal[id] = { year: n.getFullYear(), month: n.getMonth(), selected: null }; }
   ['purchase','expiry','edit-purchase','edit-expiry'].forEach(initCal);
@@ -505,12 +606,22 @@
       document.getElementById('app-screen').style.visibility = 'visible';
       populateAccountChip(user);
       loadItems();
+      loadShopItems();
     } else {
       document.getElementById('auth-screen').style.display = 'flex';
       document.getElementById('auth-screen').style.visibility = 'visible';
       document.getElementById('app-screen').style.display  = 'none';
     }
   });
+
+  /* ── Tab switching ── */
+  function switchTab(tab) {
+    activeTab = tab;
+    document.getElementById('tab-inventory').classList.toggle('active', tab === 'inventory');
+    document.getElementById('tab-shopping').classList.toggle('active', tab === 'shopping');
+    document.getElementById('view-inventory').style.display = tab === 'inventory' ? '' : 'none';
+    document.getElementById('view-shopping').style.display  = tab === 'shopping'  ? '' : 'none';
+  }
 
   /* ── Firestore ── */
   async function loadItems() {
@@ -545,6 +656,285 @@
       document.getElementById('items-list').innerHTML = '<div class="empty"><div class="big">⚠️</div>Error: ' + (e.message || e.code || 'Could not load items') + '</div>';
     }
   }
+
+  /* ── Shopping list: load ── */
+  async function loadShopItems() {
+    try {
+      const q = query(collection(db,'shopping'), where('uid','==',currentUser.uid));
+      const snap = await getDocs(q);
+      shopItems = snap.docs.map(function(d){ return Object.assign({ docId: d.id }, d.data()); });
+      shopItems.sort(function(a,b){ return (a.createdAt||0) - (b.createdAt||0); });
+      renderShopList();
+    } catch(e) { console.error('loadShopItems error:', e); }
+  }
+
+  /* ── Shopping list: render ── */
+  function renderShopList() {
+    const list = document.getElementById('shop-list');
+    const checked = shopItems.filter(function(i){ return i.checked && !i.addedToInventory; }).length;
+    document.getElementById('shop-count').textContent = shopItems.length + ' item' + (shopItems.length !== 1 ? 's' : '') + (checked ? ' · ' + checked + ' selected' : '');
+    document.getElementById('shop-done-btn').disabled = checked === 0;
+
+    if (!shopItems.length) {
+      list.innerHTML = '<div class="empty"><div class="big">🛒</div>Your shopping list is empty — tap ＋ to add items.</div>';
+      return;
+    }
+    list.innerHTML = shopItems.map(function(it) {
+      const isAdded = it.addedToInventory;
+      const cls = isAdded ? 'shop-item done-added' : (it.checked ? 'shop-item checked' : 'shop-item');
+      const cbCls = (it.checked || isAdded) ? 'shop-cb checked' : 'shop-cb';
+      const sub = [it.qty ? 'Qty: ' + it.qty : '', it.note || ''].filter(Boolean).join(' · ');
+      return '<div class="shop-item-wrap" data-id="' + it.docId + '">' +
+        '<div class="' + cls + '">' +
+          '<button class="' + cbCls + '" data-action="toggle" data-id="' + it.docId + '">' + ((it.checked || isAdded) ? '✓' : '') + '</button>' +
+          '<div class="shop-item-info">' +
+            '<div class="shop-item-name">' + it.name + '</div>' +
+            (sub ? '<div class="shop-item-sub">' + sub + '</div>' : '') +
+          '</div>' +
+          (isAdded ? '<span class="shop-item-added-badge">✓ Added</span>' : '') +
+          (!isAdded ? '<button class="shop-item-del" data-action="del" data-id="' + it.docId + '">✕</button>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    list.onclick = function(e) {
+      var toggleBtn = e.target.closest('[data-action="toggle"]');
+      if (toggleBtn) { toggleShopItem(toggleBtn.dataset.id); return; }
+      var delBtn = e.target.closest('[data-action="del"]');
+      if (delBtn) { deleteShopItem(delBtn.dataset.id); return; }
+    };
+  }
+
+  /* ── Shopping list: toggle checked ── */
+  async function toggleShopItem(docId) {
+    const it = shopItems.find(function(i){ return i.docId === docId; });
+    if (!it || it.addedToInventory) return;
+    it.checked = !it.checked;
+    renderShopList();
+    try { await updateDoc(doc(db,'shopping',docId), { checked: it.checked }); }
+    catch(e) { it.checked = !it.checked; renderShopList(); }
+  }
+
+  /* ── Shopping list: delete ── */
+  async function deleteShopItem(docId) {
+    const idx = shopItems.findIndex(function(i){ return i.docId === docId; });
+    if (idx === -1) return;
+    shopItems.splice(idx, 1);
+    renderShopList();
+    try { await deleteDoc(doc(db,'shopping',docId)); }
+    catch(e) { showToast('Error removing item.'); }
+  }
+
+  /* ── Shopping list: add modal ── */
+  window.openShopAddModal = function() {
+    document.getElementById('shop-f-name').value = '';
+    document.getElementById('shop-f-qty').value  = '';
+    document.getElementById('shop-f-note').value = '';
+    document.getElementById('shop-add-modal').classList.add('open');
+    setTimeout(function(){ document.getElementById('shop-f-name').focus(); }, 100);
+  };
+  window.closeShopAddModal = function() {
+    document.getElementById('shop-add-modal').classList.remove('open');
+  };
+  window.saveShopItem = async function() {
+    const name = document.getElementById('shop-f-name').value.trim();
+    if (!name) { showToast('Please enter an item name.'); return; }
+    const qty  = document.getElementById('shop-f-qty').value.trim();
+    const note = document.getElementById('shop-f-note').value.trim();
+    const btn  = document.getElementById('shop-add-save');
+    btn.disabled = true; btn.textContent = 'Adding…';
+    try {
+      const docRef = await addDoc(collection(db,'shopping'), {
+        uid: currentUser.uid, name, qty, note, checked: false, addedToInventory: false, createdAt: Date.now()
+      });
+      shopItems.push({ docId: docRef.id, uid: currentUser.uid, name, qty, note, checked: false, addedToInventory: false, createdAt: Date.now() });
+      closeShopAddModal();
+      renderShopList();
+      showToast('"' + name + '" added to list!');
+    } catch(e) { showToast('Error: ' + (e.message || 'Could not save.')); }
+    finally { btn.disabled = false; btn.textContent = 'Add to list'; }
+  };
+
+  /* ── Checkout modal ── */
+  // Map of calId → checkout cal state
+  const checkoutCals = {};
+
+  window.openCheckoutModal = function() {
+    const toCheckout = shopItems.filter(function(i){ return i.checked && !i.addedToInventory; });
+    if (!toCheckout.length) return;
+
+    // Build checkout items HTML with individual expiry date pickers
+    const html = toCheckout.map(function(it, idx) {
+      const calId = 'co-expiry-' + idx;
+      // init cal state
+      const n = new Date();
+      checkoutCals[calId] = { year: n.getFullYear(), month: n.getMonth(), selected: null, btnId: 'co-btn-' + idx, displayId: 'co-display-' + idx, popupId: 'co-popup-' + idx };
+      return '<div class="checkout-item" data-shopid="' + it.docId + '" data-idx="' + idx + '">' +
+        '<div class="checkout-item-header">' +
+          '<span class="checkout-item-name">' + it.name + '</span>' +
+          (it.qty ? '<span class="checkout-item-qty">Qty: ' + it.qty + '</span>' : '') +
+        '</div>' +
+        '<div class="checkout-fields">' +
+          '<div class="checkout-field">' +
+            '<label>Type</label>' +
+            '<select class="co-type-sel" id="co-type-' + idx + '" style="width:100%;padding:7px 9px;font-size:13px;font-family:var(--font);border:0.5px solid var(--border-mid);border-radius:var(--radius-md);background:var(--bg-primary);color:var(--text-primary);outline:none;">' +
+              '<option value="food">🥦 Food</option>' +
+              '<option value="household">🏠 Household</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="checkout-field">' +
+            '<label>Expiry date <span style="font-weight:400;color:var(--text-secondary)">(optional)</span></label>' +
+            '<button class="date-input-btn" id="co-btn-' + idx + '" style="font-size:13px;padding:7px 9px;" data-calid="' + calId + '">' +
+              '<span id="co-display-' + idx + '" class="placeholder" style="font-size:13px;">Select date</span>' +
+              '<span class="cal-icon">📅</span>' +
+            '</button>' +
+            '<div class="cal-popup" id="co-popup-' + idx + '"></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    document.getElementById('checkout-items-list').innerHTML = html;
+    document.getElementById('checkout-progress').textContent = '';
+    document.getElementById('checkout-save-btn').disabled = false;
+    document.getElementById('checkout-save-btn').textContent = 'Add All to Inventory';
+    document.getElementById('checkout-modal').classList.add('open');
+
+    // Init calendars for each checkout item
+    toCheckout.forEach(function(it, idx) {
+      const calId = 'co-expiry-' + idx;
+      initCal(calId);
+      document.getElementById('co-btn-' + idx).addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleCheckoutCal(e, calId);
+      });
+    });
+  };
+
+  function initCal(calId) {
+    const state = checkoutCals[calId];
+    if (!state) return;
+    renderCheckoutCal(calId);
+  }
+
+  function renderCheckoutCal(calId) {
+    const state = checkoutCals[calId];
+    const popup = document.getElementById(state.popupId);
+    if (!popup) return;
+    const n = new Date();
+    const todayISO = toISO(n.getFullYear(), n.getMonth(), n.getDate());
+    const y = state.year, m = state.month;
+    const first = new Date(y, m, 1).getDay();
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    let html = '<div class="cal-nav">' +
+      '<button class="cal-nav-btn" onclick="checkoutCalNav(\'' + calId + '\',-1)">‹</button>' +
+      '<div class="cal-selects"><span style="font-size:13px;font-weight:500;">' + MONTHS[m] + ' ' + y + '</span></div>' +
+      '<button class="cal-nav-btn" onclick="checkoutCalNav(\'' + calId + '\',1)">›</button></div>';
+    html += '<div class="cal-grid">' + DOW.map(function(d){ return '<div class="cal-dow">'+d+'</div>'; }).join('');
+    for (var i = 0; i < first; i++) html += '<div></div>';
+    for (var d = 1; d <= daysInMonth; d++) {
+      const iso = toISO(y, m, d);
+      const cls = ['cal-day', iso === todayISO ? 'today' : '', state.selected === iso ? 'selected' : ''].filter(Boolean).join(' ');
+      html += '<button class="' + cls + '" onclick="checkoutCalPick(\'' + calId + '\',\'' + iso + '\')">' + d + '</button>';
+    }
+    html += '</div>';
+    html += '<button class="cal-clear" onclick="checkoutCalClear(\'' + calId + '\')">Clear date</button>';
+    popup.innerHTML = html;
+  }
+
+  window.checkoutCalNav = function(calId, dir) {
+    const state = checkoutCals[calId];
+    state.month += dir;
+    if (state.month > 11) { state.month = 0; state.year++; }
+    if (state.month < 0)  { state.month = 11; state.year--; }
+    renderCheckoutCal(calId);
+  };
+  window.checkoutCalPick = function(calId, iso) {
+    const state = checkoutCals[calId];
+    state.selected = iso;
+    const display = document.getElementById(state.displayId);
+    display.textContent = fmtDisplay(iso); display.classList.remove('placeholder');
+    document.getElementById(state.popupId).classList.remove('open');
+    document.getElementById(state.btnId).classList.remove('open');
+    renderCheckoutCal(calId);
+  };
+  window.checkoutCalClear = function(calId) {
+    const state = checkoutCals[calId];
+    state.selected = null;
+    const display = document.getElementById(state.displayId);
+    display.textContent = 'Select date'; display.classList.add('placeholder');
+    document.getElementById(state.popupId).classList.remove('open');
+    document.getElementById(state.btnId).classList.remove('open');
+    renderCheckoutCal(calId);
+  };
+  function toggleCheckoutCal(e, calId) {
+    e.stopPropagation();
+    const state = checkoutCals[calId];
+    const popup = document.getElementById(state.popupId);
+    const btn   = document.getElementById(state.btnId);
+    const isOpen = popup.classList.contains('open');
+    // close all cals first
+    document.querySelectorAll('.cal-popup.open').forEach(function(p){ p.classList.remove('open'); });
+    document.querySelectorAll('.date-input-btn.open').forEach(function(b){ b.classList.remove('open'); });
+    if (!isOpen) {
+      renderCheckoutCal(calId);
+      popup.classList.add('open');
+      btn.classList.add('open');
+      // position popup
+      const rect = btn.getBoundingClientRect();
+      popup.style.top  = (rect.bottom + window.scrollY + 4) + 'px';
+      popup.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
+    }
+  }
+
+  window.closeCheckoutModal = function() {
+    document.getElementById('checkout-modal').classList.remove('open');
+    document.querySelectorAll('.cal-popup.open').forEach(function(p){ p.classList.remove('open'); });
+  };
+
+  window.runCheckout = async function() {
+    const toCheckout = shopItems.filter(function(i){ return i.checked && !i.addedToInventory; });
+    const btn  = document.getElementById('checkout-save-btn');
+    const prog = document.getElementById('checkout-progress');
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    const failed = [];
+    for (var idx = 0; idx < toCheckout.length; idx++) {
+      const it = toCheckout[idx];
+      const calId = 'co-expiry-' + idx;
+      const expiry = checkoutCals[calId] ? checkoutCals[calId].selected : null;
+      const type = document.getElementById('co-type-' + idx) ? document.getElementById('co-type-' + idx).value : 'food';
+      prog.textContent = 'Adding ' + (idx+1) + ' of ' + toCheckout.length + '…';
+      try {
+        const docRef = await addDoc(collection(db,'items'), {
+          uid: currentUser.uid, name: it.name, type: type, note: it.note || '',
+          qty: it.qty || '', purchase: null, expiry: expiry,
+          photoURLs: [], photoStoragePaths: [], createdAt: Date.now()
+        });
+        items.unshift({ docId: docRef.id, uid: currentUser.uid, name: it.name, type: type,
+          note: it.note || '', qty: it.qty || '', purchase: null, expiry: expiry,
+          photoURLs: [], photoStoragePaths: [], createdAt: Date.now() });
+        // Mark as added in shopping list
+        it.addedToInventory = true;
+        await updateDoc(doc(db,'shopping',it.docId), { addedToInventory: true });
+      } catch(e) {
+        console.error('checkout error for', it.name, e);
+        failed.push(it.name);
+      }
+    }
+
+    prog.textContent = '';
+    renderShopList();
+    renderItems();
+
+    if (failed.length) {
+      showToast('Failed to add: ' + failed.join(', '));
+      btn.disabled = false; btn.textContent = 'Retry Failed Items';
+    } else {
+      closeCheckoutModal();
+      showToast('Added ' + toCheckout.length + ' item' + (toCheckout.length > 1 ? 's' : '') + ' to inventory!');
+    }
+  };
 
   /* ── Local photo helpers ── */
   function readFileAsDataURL(file) {
@@ -988,7 +1378,7 @@
         '<div class="item-info">' +
           '<div class="item-name">' + it.name + '</div>' +
           (it.note ? '<div class="item-note">' + it.note + '</div>' : '') +
-          '<div class="item-meta">Bought: ' + fmtDate(it.purchase) + ' &nbsp;·&nbsp; ' + expLbl + ': ' + fmtDate(it.expiry) + '</div>' +
+          '<div class="item-meta">' + (it.qty ? 'Qty: ' + it.qty + ' &nbsp;·&nbsp; ' : '') + 'Bought: ' + fmtDate(it.purchase) + ' &nbsp;·&nbsp; ' + expLbl + ': ' + fmtDate(it.expiry) + '</div>' +
           '<div class="item-badges"><span class="badge badge-type">' + (it.type==='food'?'Food':'Household') + '</span>' +
           (dl ? '<span class="badge ' + bc + '">' + dl + '</span>' : '') + '</div>' +
         '</div></div>';
@@ -1175,8 +1565,11 @@
   // Theme
   document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
-  // FAB buttons
-  document.getElementById('fab-add').addEventListener('click', openAddModal);
+  // FAB buttons — context-aware
+  document.getElementById('fab-add').addEventListener('click', function() {
+    if (activeTab === 'shopping') openShopAddModal();
+    else openAddModal();
+  });
   document.getElementById('fab-history').addEventListener('click', openHistoryModal);
 
   // Search
@@ -1211,6 +1604,24 @@
   document.getElementById('btn-edit-expiry').addEventListener('click', function(e){ toggleCal(e,'edit-expiry'); });
   document.getElementById('edit-camera-input').addEventListener('change', handleEditPhoto);
   document.getElementById('edit-gallery-input').addEventListener('change', handleEditPhoto);
+
+  // Tabs
+  document.getElementById('tab-inventory').addEventListener('click', function(){ switchTab('inventory'); });
+  document.getElementById('tab-shopping').addEventListener('click', function(){ switchTab('shopping'); });
+
+  // Shopping add modal
+  document.getElementById('shop-add-close').addEventListener('click', closeShopAddModal);
+  document.getElementById('shop-add-cancel').addEventListener('click', closeShopAddModal);
+  document.getElementById('shop-add-save').addEventListener('click', saveShopItem);
+  document.getElementById('shop-add-modal').addEventListener('click', function(e){ if(e.target===this) closeShopAddModal(); });
+  document.getElementById('shop-f-name').addEventListener('keydown', function(e){ if(e.key==='Enter') saveShopItem(); });
+
+  // Done shopping / checkout
+  document.getElementById('shop-done-btn').addEventListener('click', openCheckoutModal);
+  document.getElementById('checkout-close').addEventListener('click', closeCheckoutModal);
+  document.getElementById('checkout-cancel').addEventListener('click', closeCheckoutModal);
+  document.getElementById('checkout-save-btn').addEventListener('click', runCheckout);
+  document.getElementById('checkout-modal').addEventListener('click', function(e){ if(e.target===this) closeCheckoutModal(); });
 
   // History modal
   document.getElementById('history-modal-close').addEventListener('click', closeHistoryModal);
