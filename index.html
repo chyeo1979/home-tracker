@@ -2153,14 +2153,16 @@
   // ── Load ────────────────────────────────────────────
   async function loadMaintItems() {
     try {
-      const q = query(collection(db,'maintenance'), where('uid','==',currentUser.uid));
-      const snap = await getDocs(q);
-      maintItems = snap.docs.map(function(d){ return Object.assign({ docId: d.id }, d.data()); });
+      const snap = await getDocs(collection(db,'maintenance'));
+      maintItems = snap.docs
+        .map(function(d){ return Object.assign({ docId: d.id }, d.data()); })
+        .filter(function(d){ return d.uid === currentUser.uid; });
       maintItems.sort(function(a,b){ return (a.createdAt||0) - (b.createdAt||0); });
       renderMaintList();
     } catch(e) {
       console.error('loadMaintItems error:', e);
-      document.getElementById('maint-list').innerHTML = '<div class="empty"><div class="big">⚠️</div>Error loading tasks.</div>';
+      const errMsg = e.message || e.code || String(e);
+      document.getElementById('maint-list').innerHTML = '<div class="empty"><div class="big">⚠️</div>Error: ' + errMsg + '</div>';
     }
   }
 
