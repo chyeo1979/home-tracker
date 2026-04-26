@@ -819,7 +819,7 @@
     // Init calendars for each checkout item
     toCheckout.forEach(function(it, idx) {
       const calId = 'co-expiry-' + idx;
-      initCal(calId);
+      initCheckoutCal(calId);
       document.getElementById('co-btn-' + idx).addEventListener('click', function(e) {
         e.stopPropagation();
         toggleCheckoutCal(e, calId);
@@ -827,7 +827,7 @@
     });
   };
 
-  function initCal(calId) {
+  function initCheckoutCal(calId) {
     const state = checkoutCals[calId];
     if (!state) return;
     renderCheckoutCal(calId);
