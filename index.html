@@ -1707,8 +1707,15 @@
     localStorage.setItem('hometracker-theme', !isDark ? 'dark' : 'light');
   };
 
-  // Init theme (dark by default)
-  applyTheme(localStorage.getItem('hometracker-theme') !== 'light');
+  // Init theme — use saved preference, fallback to OS preference
+  (function() {
+    const saved = localStorage.getItem('hometracker-theme');
+    if (saved) {
+      applyTheme(saved === 'dark');
+    } else {
+      applyTheme(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    }
+  })();
   // Restore saved sort preference
   document.getElementById('sort-by').value = sortBy;
   setupCameraButtons();
