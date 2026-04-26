@@ -264,6 +264,7 @@
   </style>
 </head>
 <body>
+<div id="debug-panel" style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#000;color:#0f0;font-size:11px;padding:6px 8px;font-family:monospace;max-height:160px;overflow-y:auto;display:none;"></div>
 
 <!-- AUTH SCREEN -->
 <div id="auth-screen">
@@ -568,22 +569,29 @@
   let editingDocId = null;
   let editType     = 'food';
   let searchQuery  = '';
-  // Persistent store — tries localStorage first, falls back to cookies (works in Brave)
+  // Debug logger — shows on screen for mobile testing
+  function dbg(msg) {
+    var p = document.getElementById('debug-panel');
+    if (p) { p.style.display = 'block'; p.innerHTML += msg + '<br>'; p.scrollTop = p.scrollHeight; }
+  }
+
   const store = {
     get: function(key) {
-      try {
-        const v = localStorage.getItem(key);
-        if (v !== null) return v;
-      } catch(e) {}
-      // fallback: read from cookie
-      const match = document.cookie.match('(?:^|;)\\s*' + key + '=([^;]*)');
-      return match ? decodeURIComponent(match[1]) : null;
+      var ls = null;
+      try { ls = localStorage.getItem(key); } catch(e) { dbg('LS.get error: ' + e); }
+      dbg('LS.get ' + key + ' = ' + ls);
+      if (ls !== null) return ls;
+      var match = document.cookie.match('(^|;)\s*' + key + '=([^;]*)');
+      var cv = match ? decodeURIComponent(match[2]) : null;
+      dbg('Cookie.get ' + key + ' = ' + cv);
+      dbg('All cookies: ' + (document.cookie || '(none)'));
+      return cv;
     },
     set: function(key, val) {
-      try { localStorage.setItem(key, val); } catch(e) {}
-      // always also write cookie as fallback (1 year expiry)
-      const exp = new Date(Date.now() + 365*24*60*60*1000).toUTCString();
-      document.cookie = key + '=' + encodeURIComponent(val) + '; expires=' + exp + '; path=/';
+      try { localStorage.setItem(key, val); dbg('LS.set ' + key + '=' + val); } catch(e) { dbg('LS.set error: ' + e); }
+      var exp = new Date(Date.now() + 365*24*60*60*1000).toUTCString();
+      document.cookie = key + '=' + encodeURIComponent(val) + '; expires=' + exp + '; path=/; SameSite=Lax';
+      dbg('Cookie.set ' + key + '=' + val + ' | after: ' + document.cookie);
     }
   };
 
