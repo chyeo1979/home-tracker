@@ -362,10 +362,15 @@
       </div>
     </div>
 
-    <div class="summary-bar">
+    <div class="summary-bar" id="inv-summary">
       <div class="stat"><div class="stat-num" id="s-total">0</div><div class="stat-lbl">Total items</div></div>
       <div class="stat"><div class="stat-num" id="s-exp" style="color:#A32D2D">0</div><div class="stat-lbl">Expired</div></div>
       <div class="stat"><div class="stat-num" id="s-soon" style="color:#C47A1A">0</div><div class="stat-lbl">Expiring soon</div></div>
+    </div>
+    <div class="summary-bar" id="maint-summary" style="display:none;">
+      <div class="stat"><div class="stat-num" id="ms-total">0</div><div class="stat-lbl">Tasks</div></div>
+      <div class="stat"><div class="stat-num" id="ms-overdue" style="color:#A32D2D">0</div><div class="stat-lbl">Overdue</div></div>
+      <div class="stat"><div class="stat-num" id="ms-soon" style="color:#C47A1A">0</div><div class="stat-lbl">Due soon</div></div>
     </div>
 
     <!-- Tabs -->
@@ -418,11 +423,6 @@
 
     <!-- Maintenance view -->
     <div id="view-maintenance" style="display:none;">
-      <div class="maint-summary">
-        <div class="stat"><div class="stat-num" id="ms-total">0</div><div class="stat-lbl">Tasks</div></div>
-        <div class="stat"><div class="stat-num" id="ms-overdue" style="color:#A32D2D">0</div><div class="stat-lbl">Overdue</div></div>
-        <div class="stat"><div class="stat-num" id="ms-soon" style="color:#C47A1A">0</div><div class="stat-lbl">Due soon</div></div>
-      </div>
       <div class="maint-list" id="maint-list"><div class="loading-screen">Loading tasks…</div></div>
     </div>
 
@@ -918,6 +918,8 @@
     document.getElementById('view-inventory').style.display = tab === 'inventory' ? '' : 'none';
     document.getElementById('view-shopping').style.display  = tab === 'shopping'  ? '' : 'none';
     document.getElementById('view-maintenance').style.display = tab === 'maintenance' ? '' : 'none';
+    document.getElementById('inv-summary').style.display   = tab === 'maintenance' ? 'none' : '';
+    document.getElementById('maint-summary').style.display = tab === 'maintenance' ? '' : 'none';
   }
 
   /* ── Firestore ── */
