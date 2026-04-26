@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Home Tracker</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏡</text></svg>" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -66,8 +67,8 @@
     .bottom-bar-inner { max-width: 680px; margin: 0 auto; padding: 0 1rem 1.5rem; display: flex; justify-content: space-between; align-items: flex-end; pointer-events: none; }
     .fab { width: 56px; height: 56px; border-radius: 50%; background: var(--text-primary); color: var(--bg-primary); border: none; font-size: 28px; line-height: 56px; text-align: center; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.2); font-family: var(--font); transition: transform 0.15s, box-shadow 0.15s; padding: 0; pointer-events: all; }
     .fab:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
-    .history-btn { width: 46px; height: 46px; border-radius: 50%; background: var(--bg-primary); color: var(--text-secondary); border: 0.5px solid var(--border-mid); font-size: 20px; line-height: 46px; text-align: center; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 0; transition: box-shadow 0.15s; pointer-events: all; }
-    .history-btn:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
+    .history-btn { width: 46px; height: 46px; border-radius: 50%; background: var(--text-primary); color: var(--bg-primary); border: none; font-size: 20px; line-height: 46px; text-align: center; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.2); padding: 0; transition: transform 0.15s, box-shadow 0.15s; pointer-events: all; }
+    .history-btn:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
 
     .field { margin-bottom: 1rem; }
     .field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 5px; }
