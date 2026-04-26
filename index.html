@@ -568,7 +568,11 @@
   let editingDocId = null;
   let editType     = 'food';
   let searchQuery  = '';
-  // Safe localStorage wrapper — Brave shields can block storage access
+  // Safe localStorage wrapper — detects if storage is blocked (e.g. Brave Shields)
+  const storageAvailable = (function() {
+    try { localStorage.setItem('__test__', '1'); localStorage.removeItem('__test__'); return true; }
+    catch(e) { return false; }
+  })();
   const store = {
     get: function(key) { try { return localStorage.getItem(key); } catch(e) { return null; } },
     set: function(key, val) { try { localStorage.setItem(key, val); } catch(e) {} }
@@ -1713,8 +1717,13 @@
     store.set('hometracker-theme', !isDark ? 'dark' : 'light');
   };
 
-  // Init theme — use saved preference, fallback to OS preference
+  // Init theme — lock to dark and hide toggle if storage is blocked, otherwise use saved/OS preference
   (function() {
+    if (!storageAvailable) {
+      applyTheme(true);
+      document.getElementById('theme-toggle').style.display = 'none';
+      return;
+    }
     const saved = store.get('hometracker-theme');
     if (saved) {
       applyTheme(saved === 'dark');
