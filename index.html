@@ -569,9 +569,14 @@
   let editType     = 'food';
   let searchQuery  = '';
   // Safe localStorage wrapper — detects if storage is blocked (e.g. Brave Shields)
+  // Brave silently accepts writes but doesn't persist them, so we write then read back to verify
   const storageAvailable = (function() {
-    try { localStorage.setItem('__test__', '1'); localStorage.removeItem('__test__'); return true; }
-    catch(e) { return false; }
+    try {
+      localStorage.setItem('__test__', 'ok');
+      const ok = localStorage.getItem('__test__') === 'ok';
+      localStorage.removeItem('__test__');
+      return ok;
+    } catch(e) { return false; }
   })();
   const store = {
     get: function(key) { try { return localStorage.getItem(key); } catch(e) { return null; } },
