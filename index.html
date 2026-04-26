@@ -611,7 +611,22 @@
     document.getElementById('account-dropdown').classList.remove('open');
   }
 
+  // Keep both screens hidden until Firebase resolves — prevents the flash
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'none';
+
+  // Safety fallback — show login if Firebase hasn't responded in 5s
+  var authFallbackTimer = setTimeout(function() {
+    const appEl  = document.getElementById('app-screen');
+    const authEl = document.getElementById('auth-screen');
+    if (!appEl.classList.contains('visible') && !authEl.classList.contains('visible')) {
+      authEl.style.display = 'flex';
+      authEl.classList.add('visible');
+    }
+  }, 5000);
+
   onAuthStateChanged(auth, user => {
+    clearTimeout(authFallbackTimer);
     currentUser = user;
     if (user) {
       document.getElementById('auth-screen').style.display = 'none';
@@ -628,16 +643,6 @@
       document.getElementById('app-screen').style.display = 'none';
     }
   });
-
-  // Safety fallback — show login if Firebase hasn't responded in 5s
-  setTimeout(function() {
-    const appEl  = document.getElementById('app-screen');
-    const authEl = document.getElementById('auth-screen');
-    if (!appEl.classList.contains('visible') && !authEl.classList.contains('visible')) {
-      authEl.style.display = 'flex';
-      authEl.classList.add('visible');
-    }
-  }, 5000);
 
   /* ── Tab switching ── */
   function switchTab(tab) {
