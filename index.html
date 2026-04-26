@@ -29,7 +29,7 @@
     }
     /* Force Brave/browser dark mode override to not interfere */
     html, body { background: var(--bg-tertiary) !important; color: var(--text-primary) !important; }
-    .modal, .auth-card, .item-card, .stat, .shop-item,
+    .modal, .auth-card, .item-card, .stat, .shop-item, .maint-card,
     .account-chip, .account-dropdown, .cal-popup,
     .date-input-btn, .field input, .field textarea { 
       background: var(--bg-primary) !important; 
@@ -276,6 +276,48 @@
     .qty-stepper input::-webkit-inner-spin-button, .qty-stepper input::-webkit-outer-spin-button { -webkit-appearance: none; }
 
     @media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
+
+    /* ── Maintenance tab ── */
+    .maint-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1.25rem; }
+    .maint-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 80px; }
+    .maint-card { background: var(--bg-primary); border: 0.5px solid var(--border-light); border-radius: var(--radius-lg); padding: 1rem 1.25rem; display: flex; align-items: flex-start; gap: 12px; position: relative; transition: border-color 0.15s, box-shadow 0.15s; }
+    .maint-card:hover { border-color: var(--border-mid); box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+    .maint-card.status-overdue { border-left: 3px solid #A32D2D; }
+    .maint-card.status-soon    { border-left: 3px solid #C47A1A; }
+    .maint-card.status-ok      { border-left: 3px solid #3B6D11; }
+    .maint-icon { width: 44px; height: 44px; border-radius: var(--radius-md); background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+    .maint-info { flex: 1; min-width: 0; padding-right: 24px; }
+    .maint-name { font-size: 15px; font-weight: 500; margin-bottom: 2px; }
+    .maint-note { font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; white-space: pre-wrap; line-height: 1.4; }
+    .maint-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 7px; }
+    .maint-badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .badge-overdue { background: #A32D2D; color: #fff; }
+    .badge-soon    { background: #C47A1A; color: #fff; }
+    .badge-ok-m    { background: #3B6D11; color: #fff; }
+    .badge-cat     { background: var(--bg-secondary); color: var(--text-secondary); border: 0.5px solid var(--border-mid); font-weight: 400; font-size: 11px; }
+    .maint-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; align-items: flex-end; }
+    .done-btn { padding: 6px 14px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--font); transition: opacity 0.15s; white-space: nowrap; }
+    .done-btn:hover { opacity: 0.85; }
+    .maint-del { width: 22px; height: 22px; border-radius: 50%; background: var(--bg-secondary); border: 0.5px solid var(--border-light); color: var(--text-secondary); font-size: 11px; line-height: 22px; text-align: center; cursor: pointer; padding: 0; font-family: var(--font); transition: background 0.12s, color 0.12s; }
+    .maint-del:hover { background: #FCEBEB; color: #A32D2D; border-color: #F09595; }
+    /* Overdue badge on tab */
+    .tab-badge { display: inline-flex; align-items: center; justify-content: center; background: #A32D2D; color: #fff; font-size: 10px; font-weight: 700; border-radius: 99px; min-width: 17px; height: 17px; padding: 0 4px; margin-left: 5px; vertical-align: middle; }
+    /* Frequency selector */
+    .freq-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+    .freq-type-select { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+    .field select { width: 100%; padding: 8px 10px; font-size: 14px; font-family: var(--font); border: 0.5px solid var(--border-mid); border-radius: var(--radius-md); background: var(--bg-primary); color: var(--text-primary); outline: none; }
+    /* History log in maint edit modal */
+    .maint-history-log { margin-top: 1rem; }
+    .maint-history-log h4 { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; }
+    .maint-log-entry { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--border-light); font-size: 13px; }
+    .maint-log-entry:last-child { border-bottom: none; }
+    .maint-log-thumb { width: 36px; height: 36px; border-radius: var(--radius-md); object-fit: cover; border: 0.5px solid var(--border-light); flex-shrink: 0; }
+    .maint-log-no-thumb { width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--bg-secondary); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .maint-log-info { flex: 1; }
+    .maint-log-date { font-weight: 500; }
+    .maint-log-note { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+    /* Done confirmation modal */
+    .confirm-note { font-size: 13px; color: var(--text-secondary); margin-bottom: 1rem; }
   </style>
 </head>
 <body>
@@ -330,6 +372,7 @@
     <div class="tabs">
       <button class="tab-btn active" id="tab-inventory">🏠 Inventory</button>
       <button class="tab-btn" id="tab-shopping">🛒 Shopping list</button>
+      <button class="tab-btn" id="tab-maintenance">🔧 Maintenance<span class="tab-badge" id="maint-tab-badge" style="display:none;"></span></button>
     </div>
 
     <!-- Inventory view -->
@@ -371,6 +414,16 @@
         </div>
       </div>
       <div class="shop-list" id="shop-list"><div class="empty"><div class="big">🛒</div>Your shopping list is empty — tap ＋ to add items.</div></div>
+    </div>
+
+    <!-- Maintenance view -->
+    <div id="view-maintenance" style="display:none;">
+      <div class="maint-summary">
+        <div class="stat"><div class="stat-num" id="ms-total">0</div><div class="stat-lbl">Tasks</div></div>
+        <div class="stat"><div class="stat-num" id="ms-overdue" style="color:#A32D2D">0</div><div class="stat-lbl">Overdue</div></div>
+        <div class="stat"><div class="stat-num" id="ms-soon" style="color:#C47A1A">0</div><div class="stat-lbl">Due soon</div></div>
+      </div>
+      <div class="maint-list" id="maint-list"><div class="loading-screen">Loading tasks…</div></div>
     </div>
 
   </div>
@@ -533,6 +586,177 @@
   </div>
 </div>
 
+<!-- MAINTENANCE: ADD TASK MODAL -->
+<div class="modal-overlay" id="maint-add-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Add maintenance task</h2>
+      <button class="modal-close" id="maint-add-close">✕</button>
+    </div>
+    <div class="field"><label>Task name</label><input type="text" id="mf-name" placeholder="e.g. Air filter replacement…" /></div>
+    <div class="field"><label>Category <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label>
+      <select id="mf-category">
+        <option value="">No category</option>
+        <option value="HVAC">HVAC</option>
+        <option value="Appliance">Appliance</option>
+        <option value="Car">Car</option>
+        <option value="Plumbing">Plumbing</option>
+        <option value="Electrical">Electrical</option>
+        <option value="Garden">Garden</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="field"><label>Notes <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label><textarea id="mf-note" rows="2" placeholder="e.g. Use HEPA filter size 16x25x1…"></textarea></div>
+    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Schedule</div>
+    <div class="freq-type-select">
+      <button class="type-btn selected" id="mf-freq-type-interval"><span class="icon">🔁</span><span class="lbl">Recurring interval</span></button>
+      <button class="type-btn" id="mf-freq-type-fixed"><span class="icon">📅</span><span class="lbl">Fixed date</span></button>
+    </div>
+    <div id="mf-interval-section">
+      <div class="freq-row">
+        <div class="field"><label>Every</label>
+          <div class="qty-stepper"><button type="button" onclick="stepQty('mf-interval-val',-1)">−</button><input type="number" id="mf-interval-val" min="1" value="3" /><button type="button" onclick="stepQty('mf-interval-val',1)">＋</button></div>
+        </div>
+        <div class="field"><label>Unit</label>
+          <select id="mf-interval-unit">
+            <option value="days">Days</option>
+            <option value="weeks">Weeks</option>
+            <option value="months" selected>Months</option>
+            <option value="years">Years</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div id="mf-fixed-section" style="display:none;">
+      <div class="field date-field">
+        <label>Next due date</label>
+        <button class="date-input-btn" id="mf-btn-fixed"><span id="mf-display-fixed" class="placeholder">Select date</span><span class="cal-icon">📅</span></button>
+        <div class="cal-popup" id="mf-cal-fixed"></div>
+      </div>
+    </div>
+    <div class="field date-field">
+      <label>Last completed <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label>
+      <button class="date-input-btn" id="mf-btn-lastdone"><span id="mf-display-lastdone" class="placeholder">Select date</span><span class="cal-icon">📅</span></button>
+      <div class="cal-popup" id="mf-cal-lastdone"></div>
+    </div>
+    <div class="field">
+      <label>Photos <span style="color:var(--text-secondary);font-weight:400;">(optional, up to 3)</span></label>
+      <div class="photo-btns" id="maint-add-photo-btns">
+        <div class="photo-btn" id="maint-add-camera-btn"><div class="up-icon">📷</div><p>Take photo</p><input type="file" id="maint-add-camera-input" accept="image/*" capture="environment" /></div>
+        <div class="photo-btn" id="maint-add-gallery-btn"><div class="up-icon">🖼️</div><p>Choose from gallery</p><input type="file" id="maint-add-gallery-input" accept="image/*" /></div>
+      </div>
+      <div class="photo-preview" id="maint-add-photo-preview"></div>
+    </div>
+    <div class="upload-progress" id="maint-add-progress"></div>
+    <div class="modal-actions">
+      <button class="cancel-btn" id="maint-add-cancel">Cancel</button>
+      <button class="save-btn" id="maint-add-save">Add task</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAINTENANCE: EDIT TASK MODAL -->
+<div class="modal-overlay" id="maint-edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Edit task</h2>
+      <button class="modal-close" id="maint-edit-close">✕</button>
+    </div>
+    <div class="field"><label>Task name</label><input type="text" id="mef-name" placeholder="Task name" /></div>
+    <div class="field"><label>Category <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label>
+      <select id="mef-category">
+        <option value="">No category</option>
+        <option value="HVAC">HVAC</option>
+        <option value="Appliance">Appliance</option>
+        <option value="Car">Car</option>
+        <option value="Plumbing">Plumbing</option>
+        <option value="Electrical">Electrical</option>
+        <option value="Garden">Garden</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="field"><label>Notes <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label><textarea id="mef-note" rows="2"></textarea></div>
+    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Schedule</div>
+    <div class="freq-type-select">
+      <button class="type-btn selected" id="mef-freq-type-interval"><span class="icon">🔁</span><span class="lbl">Recurring interval</span></button>
+      <button class="type-btn" id="mef-freq-type-fixed"><span class="icon">📅</span><span class="lbl">Fixed date</span></button>
+    </div>
+    <div id="mef-interval-section">
+      <div class="freq-row">
+        <div class="field"><label>Every</label>
+          <div class="qty-stepper"><button type="button" onclick="stepQty('mef-interval-val',-1)">−</button><input type="number" id="mef-interval-val" min="1" value="3" /><button type="button" onclick="stepQty('mef-interval-val',1)">＋</button></div>
+        </div>
+        <div class="field"><label>Unit</label>
+          <select id="mef-interval-unit">
+            <option value="days">Days</option>
+            <option value="weeks">Weeks</option>
+            <option value="months" selected>Months</option>
+            <option value="years">Years</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div id="mef-fixed-section" style="display:none;">
+      <div class="field date-field">
+        <label>Next due date</label>
+        <button class="date-input-btn" id="mef-btn-fixed"><span id="mef-display-fixed" class="placeholder">Select date</span><span class="cal-icon">📅</span></button>
+        <div class="cal-popup" id="mef-cal-fixed"></div>
+      </div>
+    </div>
+    <div class="field date-field">
+      <label>Last completed <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label>
+      <button class="date-input-btn" id="mef-btn-lastdone"><span id="mef-display-lastdone" class="placeholder">Select date</span><span class="cal-icon">📅</span></button>
+      <div class="cal-popup" id="mef-cal-lastdone"></div>
+    </div>
+    <div class="field">
+      <label>Photos <span style="color:var(--text-secondary);font-weight:400;">(optional, up to 3)</span></label>
+      <div class="photo-btns" id="maint-edit-photo-btns">
+        <div class="photo-btn" id="maint-edit-camera-btn"><div class="up-icon">📷</div><p>Take photo</p><input type="file" id="maint-edit-camera-input" accept="image/*" capture="environment" /></div>
+        <div class="photo-btn" id="maint-edit-gallery-btn"><div class="up-icon">🖼️</div><p>Choose from gallery</p><input type="file" id="maint-edit-gallery-input" accept="image/*" /></div>
+      </div>
+      <div class="photo-preview" id="maint-edit-photo-preview"></div>
+    </div>
+    <!-- Completion history log -->
+    <div class="maint-history-log" id="maint-log-section">
+      <h4>Completion history</h4>
+      <div id="maint-log-list"></div>
+    </div>
+    <div class="upload-progress" id="maint-edit-progress"></div>
+    <div class="modal-actions">
+      <button class="cancel-btn" id="maint-edit-cancel">Cancel</button>
+      <button class="save-btn" id="maint-edit-save">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAINTENANCE: DONE CONFIRMATION MODAL -->
+<div class="modal-overlay" id="maint-done-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>✅ Mark as done</h2>
+      <button class="modal-close" id="maint-done-close">✕</button>
+    </div>
+    <p class="confirm-note" id="maint-done-desc">Log today as completed?</p>
+    <div class="field">
+      <label>Note <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label>
+      <textarea id="maint-done-note" rows="2" placeholder="e.g. Replaced with Panasonic filter, service by ABC garage…"></textarea>
+    </div>
+    <div class="field">
+      <label>Photo <span style="color:var(--text-secondary);font-weight:400;">(optional — receipt, new part, etc.)</span></label>
+      <div class="photo-btns" id="maint-done-photo-btns">
+        <div class="photo-btn" id="maint-done-camera-btn"><div class="up-icon">📷</div><p>Take photo</p><input type="file" id="maint-done-camera-input" accept="image/*" capture="environment" /></div>
+        <div class="photo-btn" id="maint-done-gallery-btn"><div class="up-icon">🖼️</div><p>Choose from gallery</p><input type="file" id="maint-done-gallery-input" accept="image/*" /></div>
+      </div>
+      <div class="photo-preview" id="maint-done-photo-preview"></div>
+    </div>
+    <div class="upload-progress" id="maint-done-progress"></div>
+    <div class="modal-actions">
+      <button class="cancel-btn" id="maint-done-cancel">Cancel</button>
+      <button class="save-btn" id="maint-done-save">Log as done</button>
+    </div>
+  </div>
+</div>
+
 <!-- Lightbox -->
 <div class="lightbox" id="lightbox">
   <button class="lightbox-close" id="lightbox-close">✕</button>
@@ -620,7 +844,7 @@
   window.doSignOut = async function() {
     closeAccountDropdown();
     await signOut(auth);
-    items = []; deletedItems = [];
+    items = []; deletedItems = []; maintItems = [];
     document.getElementById('items-list').innerHTML = '<div class="loading-screen">Loading your items…</div>';
   };
 
@@ -667,6 +891,7 @@
       populateAccountChip(user);
       loadItems();
       loadShopItems();
+      loadMaintItems();
     } else {
       const authEl = document.getElementById('auth-screen');
       authEl.style.display = 'flex';
@@ -680,8 +905,10 @@
     activeTab = tab;
     document.getElementById('tab-inventory').classList.toggle('active', tab === 'inventory');
     document.getElementById('tab-shopping').classList.toggle('active', tab === 'shopping');
+    document.getElementById('tab-maintenance').classList.toggle('active', tab === 'maintenance');
     document.getElementById('view-inventory').style.display = tab === 'inventory' ? '' : 'none';
     document.getElementById('view-shopping').style.display  = tab === 'shopping'  ? '' : 'none';
+    document.getElementById('view-maintenance').style.display = tab === 'maintenance' ? '' : 'none';
   }
 
   /* ── Firestore ── */
@@ -1764,6 +1991,7 @@
   // FAB buttons — context-aware
   document.getElementById('fab-add').addEventListener('click', function() {
     if (activeTab === 'shopping') openShopAddModal();
+    else if (activeTab === 'maintenance') openMaintAddModal();
     else openAddModal();
   });
   document.getElementById('fab-history').addEventListener('click', openHistoryModal);
@@ -1804,6 +2032,39 @@
   // Tabs
   document.getElementById('tab-inventory').addEventListener('click', function(){ switchTab('inventory'); });
   document.getElementById('tab-shopping').addEventListener('click', function(){ switchTab('shopping'); });
+  document.getElementById('tab-maintenance').addEventListener('click', function(){ switchTab('maintenance'); });
+
+  // Maintenance add modal
+  document.getElementById('maint-add-close').addEventListener('click', closeMaintAddModal);
+  document.getElementById('maint-add-cancel').addEventListener('click', closeMaintAddModal);
+  document.getElementById('maint-add-save').addEventListener('click', saveMaintTask);
+  document.getElementById('maint-add-modal').addEventListener('click', function(e){ if(e.target===this) closeMaintAddModal(); });
+  document.getElementById('mf-freq-type-interval').addEventListener('click', function(){ maintFreqMode('add','interval'); });
+  document.getElementById('mf-freq-type-fixed').addEventListener('click', function(){ maintFreqMode('add','fixed'); });
+  document.getElementById('mf-btn-fixed').addEventListener('click', function(e){ toggleMaintCal(e,'mf-cal-fixed','mf-btn-fixed','mf-display-fixed'); });
+  document.getElementById('mf-btn-lastdone').addEventListener('click', function(e){ toggleMaintCal(e,'mf-cal-lastdone','mf-btn-lastdone','mf-display-lastdone'); });
+  document.getElementById('maint-add-camera-input').addEventListener('change', function(e){ handleMaintAddPhoto(e); });
+  document.getElementById('maint-add-gallery-input').addEventListener('change', function(e){ handleMaintAddPhoto(e); });
+
+  // Maintenance edit modal
+  document.getElementById('maint-edit-close').addEventListener('click', closeMaintEditModal);
+  document.getElementById('maint-edit-cancel').addEventListener('click', closeMaintEditModal);
+  document.getElementById('maint-edit-save').addEventListener('click', saveMaintEdit);
+  document.getElementById('maint-edit-modal').addEventListener('click', function(e){ if(e.target===this) closeMaintEditModal(); });
+  document.getElementById('mef-freq-type-interval').addEventListener('click', function(){ maintFreqMode('edit','interval'); });
+  document.getElementById('mef-freq-type-fixed').addEventListener('click', function(){ maintFreqMode('edit','fixed'); });
+  document.getElementById('mef-btn-fixed').addEventListener('click', function(e){ toggleMaintCal(e,'mef-cal-fixed','mef-btn-fixed','mef-display-fixed'); });
+  document.getElementById('mef-btn-lastdone').addEventListener('click', function(e){ toggleMaintCal(e,'mef-cal-lastdone','mef-btn-lastdone','mef-display-lastdone'); });
+  document.getElementById('maint-edit-camera-input').addEventListener('change', function(e){ handleMaintEditPhoto(e); });
+  document.getElementById('maint-edit-gallery-input').addEventListener('change', function(e){ handleMaintEditPhoto(e); });
+
+  // Maintenance done modal
+  document.getElementById('maint-done-close').addEventListener('click', closeMaintDoneModal);
+  document.getElementById('maint-done-cancel').addEventListener('click', closeMaintDoneModal);
+  document.getElementById('maint-done-save').addEventListener('click', confirmMaintDone);
+  document.getElementById('maint-done-modal').addEventListener('click', function(e){ if(e.target===this) closeMaintDoneModal(); });
+  document.getElementById('maint-done-camera-input').addEventListener('change', function(e){ handleMaintDonePhoto(e); });
+  document.getElementById('maint-done-gallery-input').addEventListener('change', function(e){ handleMaintDonePhoto(e); });
 
   // Shopping add modal
   document.getElementById('shop-add-close').addEventListener('click', closeShopAddModal);
@@ -1829,6 +2090,574 @@
   document.getElementById('lightbox').addEventListener('click', closeLightbox);
   document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
   document.getElementById('lightbox-img').addEventListener('click', function(e){ e.stopPropagation(); });
+
+  /* ════════════════════════════════════════════════════
+     MAINTENANCE MODULE
+  ════════════════════════════════════════════════════ */
+
+  let maintItems       = [];          // all tasks from Firestore
+  let editingMaintId   = null;
+  let maintAddPhotos   = [];          // { file, previewUrl }
+  let maintEditPhotos  = [];          // { url, storagePath } | { file, previewUrl }
+  let maintDonePhotos  = [];          // for the done-confirmation modal
+  let maintDoneTargetId = null;       // docId being confirmed
+  const maintCalState  = {};          // mini calendar states for maint modals
+
+  // ── Category icons ──────────────────────────────────
+  function maintCatIcon(cat) {
+    const m = { HVAC:'🌬️', Appliance:'🔌', Car:'🚗', Plumbing:'🚰', Electrical:'⚡', Garden:'🌿', Other:'🔧' };
+    return m[cat] || '🔧';
+  }
+
+  // ── Next-due calculation ─────────────────────────────
+  function calcNextDue(task) {
+    if (task.scheduleType === 'fixed') return task.fixedDate || null;
+    if (!task.intervalVal || !task.intervalUnit) return null;
+    const base = task.lastDone ? new Date(task.lastDone) : (task.createdAt ? new Date(task.createdAt) : new Date());
+    const d = new Date(base);
+    const v = parseInt(task.intervalVal, 10);
+    if (task.intervalUnit === 'days')   d.setDate(d.getDate() + v);
+    if (task.intervalUnit === 'weeks')  d.setDate(d.getDate() + v * 7);
+    if (task.intervalUnit === 'months') d.setMonth(d.getMonth() + v);
+    if (task.intervalUnit === 'years')  d.setFullYear(d.getFullYear() + v);
+    return toISO(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  function maintStatus(nextDue) {
+    if (!nextDue) return 'ok';
+    const today = new Date(); today.setHours(0,0,0,0);
+    const due   = new Date(nextDue + 'T00:00:00');
+    const diff  = Math.round((due - today) / (1000 * 60 * 60 * 24));
+    if (diff < 0)  return 'overdue';
+    if (diff <= 7) return 'soon';
+    return 'ok';
+  }
+
+  function maintStatusLabel(nextDue) {
+    if (!nextDue) return { label:'No due date', cls:'badge-cat' };
+    const today = new Date(); today.setHours(0,0,0,0);
+    const due   = new Date(nextDue + 'T00:00:00');
+    const diff  = Math.round((due - today) / (1000 * 60 * 60 * 24));
+    if (diff < 0)  return { label: 'Overdue by ' + Math.abs(diff) + 'd', cls:'badge badge-exp badge-overdue' };
+    if (diff === 0) return { label: 'Due today', cls:'badge badge-warn badge-soon' };
+    if (diff <= 7) return { label: 'Due in ' + diff + 'd', cls:'badge badge-warn badge-soon' };
+    return { label: 'Due ' + fmtDisplay(nextDue), cls:'badge badge-ok badge-ok-m' };
+  }
+
+  function maintIntervalLabel(task) {
+    if (task.scheduleType === 'fixed') return 'Once on ' + fmtDisplay(task.fixedDate);
+    if (!task.intervalVal) return '';
+    return 'Every ' + task.intervalVal + ' ' + task.intervalUnit;
+  }
+
+  // ── Load ────────────────────────────────────────────
+  async function loadMaintItems() {
+    try {
+      const q = query(collection(db,'maintenance'), where('uid','==',currentUser.uid));
+      const snap = await getDocs(q);
+      maintItems = snap.docs.map(function(d){ return Object.assign({ docId: d.id }, d.data()); });
+      maintItems.sort(function(a,b){ return (a.createdAt||0) - (b.createdAt||0); });
+      renderMaintList();
+    } catch(e) {
+      console.error('loadMaintItems error:', e);
+      document.getElementById('maint-list').innerHTML = '<div class="empty"><div class="big">⚠️</div>Error loading tasks.</div>';
+    }
+  }
+
+  // ── Render ───────────────────────────────────────────
+  function renderMaintList() {
+    const list = document.getElementById('maint-list');
+    let overdue = 0, soon = 0;
+    document.getElementById('ms-total').textContent = maintItems.length;
+
+    if (!maintItems.length) {
+      list.innerHTML = '<div class="empty"><div class="big">🔧</div>No maintenance tasks yet — tap ＋ to add one.</div>';
+      document.getElementById('ms-overdue').textContent = 0;
+      document.getElementById('ms-soon').textContent = 0;
+      document.getElementById('maint-tab-badge').style.display = 'none';
+      return;
+    }
+
+    // Sort: overdue first, then soon, then ok; within each group by nextDue ascending
+    const withDue = maintItems.map(function(t){
+      const nd = calcNextDue(t);
+      const st = maintStatus(nd);
+      return Object.assign({}, t, { _nextDue: nd, _status: st });
+    });
+    const order = { overdue: 0, soon: 1, ok: 2 };
+    withDue.sort(function(a,b){
+      if (order[a._status] !== order[b._status]) return order[a._status] - order[b._status];
+      if (a._nextDue && b._nextDue) return a._nextDue.localeCompare(b._nextDue);
+      return 0;
+    });
+
+    withDue.forEach(function(t){
+      if (t._status === 'overdue') overdue++;
+      if (t._status === 'soon')    soon++;
+    });
+    document.getElementById('ms-overdue').textContent = overdue;
+    document.getElementById('ms-soon').textContent = soon;
+
+    const badge = document.getElementById('maint-tab-badge');
+    if (overdue > 0) { badge.textContent = overdue; badge.style.display = ''; }
+    else { badge.style.display = 'none'; }
+
+    list.innerHTML = withDue.map(function(t) {
+      const sl = maintStatusLabel(t._nextDue);
+      const lastDoneStr = t.lastDone ? 'Last done: ' + fmtDisplay(t.lastDone) : 'Never done';
+      const intervalStr = maintIntervalLabel(t);
+      const thumb = (t.photoURLs && t.photoURLs[0]) ?
+        '<img class="item-thumb" src="' + t.photoURLs[0] + '" alt="" onclick="event.stopPropagation();openLightbox(\'' + t.photoURLs[0] + '\')" />' :
+        '<div class="item-no-thumb">' + maintCatIcon(t.category) + '</div>';
+      return '<div class="maint-card status-' + t._status + '" data-id="' + t.docId + '">' +
+        '<div class="item-thumbs">' + thumb + '</div>' +
+        '<div class="maint-info">' +
+          '<div class="maint-name">' + t.name + '</div>' +
+          (t.note ? '<div class="maint-note">' + t.note + '</div>' : '') +
+          '<div class="maint-meta">' + lastDoneStr + (intervalStr ? ' · ' + intervalStr : '') + '</div>' +
+          '<div class="maint-badges">' +
+            '<span class="' + sl.cls + '">' + sl.label + '</span>' +
+            (t.category ? '<span class="badge badge-type badge-cat">' + t.category + '</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="maint-actions">' +
+          '<button class="done-btn" data-action="done" data-id="' + t.docId + '">✓ Done</button>' +
+          '<button class="maint-del" data-action="delete" data-id="' + t.docId + '">✕</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    // Card click → edit; button clicks handled separately
+    list.querySelectorAll('.maint-card').forEach(function(card) {
+      card.addEventListener('click', function(e) {
+        const action = e.target.closest('[data-action]');
+        if (action && action.dataset.action === 'done') {
+          e.stopPropagation();
+          openMaintDoneModal(action.dataset.id);
+        } else if (action && action.dataset.action === 'delete') {
+          e.stopPropagation();
+          deleteMaintTask(action.dataset.id);
+        } else {
+          openMaintEditModal(card.dataset.id);
+        }
+      });
+    });
+  }
+
+  // ── Mini calendar helpers for maintenance modals ──────
+  function maintCalInit(key) {
+    const n = new Date();
+    maintCalState[key] = { year: n.getFullYear(), month: n.getMonth(), selected: null };
+  }
+  ['mf-cal-fixed','mf-cal-lastdone','mef-cal-fixed','mef-cal-lastdone'].forEach(maintCalInit);
+
+  function renderMaintCal(key, popupId, btnId, displayId) {
+    const state = maintCalState[key];
+    const popup = document.getElementById(popupId);
+    if (!popup || !state) return;
+    const n = new Date();
+    const todayISO = toISO(n.getFullYear(), n.getMonth(), n.getDate());
+    const y = state.year, m = state.month;
+    const first = new Date(y, m, 1).getDay();
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    let html = '<div class="cal-nav">' +
+      '<button class="cal-nav-btn" onclick="maintCalNav(\'' + key + '\',\'' + popupId + '\',\'' + btnId + '\',\'' + displayId + '\',-1)">‹</button>' +
+      '<div class="cal-selects"><span style="font-size:13px;font-weight:500;">' + MONTHS[m] + ' ' + y + '</span></div>' +
+      '<button class="cal-nav-btn" onclick="maintCalNav(\'' + key + '\',\'' + popupId + '\',\'' + btnId + '\',\'' + displayId + '\',1)">›</button></div>';
+    html += '<div class="cal-grid">' + DOW.map(function(d){ return '<div class="cal-dow">'+d+'</div>'; }).join('');
+    for (var i = 0; i < first; i++) html += '<div></div>';
+    for (var day = 1; day <= daysInMonth; day++) {
+      const iso = toISO(y, m, day);
+      const cls = ['cal-day', iso === todayISO ? 'today' : '', state.selected === iso ? 'selected' : ''].filter(Boolean).join(' ');
+      html += '<button class="' + cls + '" onclick="maintCalPick(\'' + key + '\',\'' + popupId + '\',\'' + btnId + '\',\'' + displayId + '\',\'' + iso + '\')">' + day + '</button>';
+    }
+    html += '</div>';
+    html += '<button class="cal-clear" onclick="maintCalClear(\'' + key + '\',\'' + popupId + '\',\'' + btnId + '\',\'' + displayId + '\')">Clear date</button>';
+    popup.innerHTML = html;
+  }
+
+  window.maintCalNav = function(key, popupId, btnId, displayId, dir) {
+    const s = maintCalState[key];
+    s.month += dir;
+    if (s.month > 11) { s.month = 0; s.year++; }
+    if (s.month < 0)  { s.month = 11; s.year--; }
+    renderMaintCal(key, popupId, btnId, displayId);
+  };
+  window.maintCalPick = function(key, popupId, btnId, displayId, iso) {
+    maintCalState[key].selected = iso;
+    const d = document.getElementById(displayId);
+    d.textContent = fmtDisplay(iso); d.classList.remove('placeholder');
+    document.getElementById(popupId).classList.remove('open');
+    document.getElementById(btnId).classList.remove('open');
+    renderMaintCal(key, popupId, btnId, displayId);
+  };
+  window.maintCalClear = function(key, popupId, btnId, displayId) {
+    maintCalState[key].selected = null;
+    const d = document.getElementById(displayId);
+    d.textContent = 'Select date'; d.classList.add('placeholder');
+    document.getElementById(popupId).classList.remove('open');
+    document.getElementById(btnId).classList.remove('open');
+    renderMaintCal(key, popupId, btnId, displayId);
+  };
+
+  function toggleMaintCal(e, key, btnId, displayId) {
+    e.stopPropagation();
+    const popup = document.getElementById(key);
+    const btn   = document.getElementById(btnId);
+    const isOpen = popup.classList.contains('open');
+    document.querySelectorAll('.cal-popup.open').forEach(function(p){ p.classList.remove('open'); });
+    document.querySelectorAll('.date-input-btn.open').forEach(function(b){ b.classList.remove('open'); });
+    if (!isOpen) {
+      renderMaintCal(key, key, btnId, displayId);
+      popup.classList.add('open');
+      btn.classList.add('open');
+      const rect = btn.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      popup.style.position = 'absolute';
+      if (spaceBelow < 320) { popup.style.bottom = '100%'; popup.style.top = 'auto'; }
+      else { popup.style.top = '100%'; popup.style.bottom = 'auto'; }
+      popup.style.left = '0'; popup.style.right = 'auto';
+    }
+  }
+
+  // ── Frequency mode toggle ─────────────────────────────
+  function maintFreqMode(prefix, mode) {
+    const pre = prefix === 'add' ? 'mf' : 'mef';
+    const isInterval = mode === 'interval';
+    document.getElementById(pre + '-freq-type-interval').classList.toggle('selected', isInterval);
+    document.getElementById(pre + '-freq-type-fixed').classList.toggle('selected', !isInterval);
+    document.getElementById(pre + '-interval-section').style.display = isInterval ? '' : 'none';
+    document.getElementById(pre + '-fixed-section').style.display   = isInterval ? 'none' : '';
+  }
+
+  // ── Photo helpers (maintenance) ───────────────────────
+  function refreshMaintPhotoPreview(photos, previewId, btns) {
+    const maxed = photos.length >= MAX_PHOTOS;
+    btns.forEach(function(id){ var el = document.getElementById(id); if(el) el.classList.toggle('maxed', maxed); });
+    const prev = document.getElementById(previewId);
+    prev.innerHTML = photos.map(function(p,i){
+      const src = p.previewUrl || p.url || '';
+      return '<div class="photo-wrap"><img class="photo-thumb-preview" src="' + src + '" /><button class="photo-remove" data-i="' + i + '">✕</button></div>';
+    }).join('');
+    prev.onclick = function(e) {
+      const btn = e.target.closest('.photo-remove');
+      if (btn) { e.stopPropagation(); photos.splice(parseInt(btn.dataset.i),1); refreshMaintPhotoPreview(photos, previewId, btns); }
+    };
+  }
+
+  window.handleMaintAddPhoto = async function(e) {
+    const file = e.target.files[0]; if (!file) return;
+    if (maintAddPhotos.length >= MAX_PHOTOS) return;
+    maintAddPhotos.push({ file, previewUrl: URL.createObjectURL(file) });
+    e.target.value = '';
+    refreshMaintPhotoPreview(maintAddPhotos, 'maint-add-photo-preview', ['maint-add-camera-btn','maint-add-gallery-btn']);
+  };
+  window.handleMaintEditPhoto = async function(e) {
+    const file = e.target.files[0]; if (!file) return;
+    if (maintEditPhotos.length >= MAX_PHOTOS) return;
+    maintEditPhotos.push({ file, previewUrl: URL.createObjectURL(file), url: null, storagePath: null });
+    e.target.value = '';
+    refreshMaintPhotoPreview(maintEditPhotos, 'maint-edit-photo-preview', ['maint-edit-camera-btn','maint-edit-gallery-btn']);
+  };
+  window.handleMaintDonePhoto = async function(e) {
+    const file = e.target.files[0]; if (!file) return;
+    if (maintDonePhotos.length >= 1) { showToast('One photo per completion.'); return; }
+    maintDonePhotos.push({ file, previewUrl: URL.createObjectURL(file) });
+    e.target.value = '';
+    refreshMaintPhotoPreview(maintDonePhotos, 'maint-done-photo-preview', ['maint-done-camera-btn','maint-done-gallery-btn']);
+  };
+
+  // ── Add modal ─────────────────────────────────────────
+  window.openMaintAddModal = function() {
+    document.getElementById('mf-name').value = '';
+    document.getElementById('mf-note').value = '';
+    document.getElementById('mf-category').value = '';
+    document.getElementById('mf-interval-val').value = '3';
+    document.getElementById('mf-interval-unit').value = 'months';
+    maintFreqMode('add','interval');
+    maintCalInit('mf-cal-fixed'); maintCalInit('mf-cal-lastdone');
+    ['mf-display-fixed','mf-display-lastdone'].forEach(function(id){
+      var el = document.getElementById(id); if(el){ el.textContent = 'Select date'; el.classList.add('placeholder'); }
+    });
+    maintAddPhotos = [];
+    refreshMaintPhotoPreview(maintAddPhotos, 'maint-add-photo-preview', ['maint-add-camera-btn','maint-add-gallery-btn']);
+    document.getElementById('maint-add-progress').textContent = '';
+    document.getElementById('maint-add-modal').classList.add('open');
+  };
+  function closeMaintAddModal() {
+    document.getElementById('maint-add-modal').classList.remove('open');
+    document.querySelectorAll('.cal-popup.open').forEach(function(p){ p.classList.remove('open'); });
+  }
+
+  window.saveMaintTask = async function() {
+    const name = document.getElementById('mf-name').value.trim();
+    if (!name) { showToast('Please enter a task name.'); return; }
+    const btn  = document.getElementById('maint-add-save');
+    const prog = document.getElementById('maint-add-progress');
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    const isInterval = document.getElementById('mf-freq-type-interval').classList.contains('selected');
+    const scheduleType = isInterval ? 'interval' : 'fixed';
+    const intervalVal  = isInterval ? document.getElementById('mf-interval-val').value : null;
+    const intervalUnit = isInterval ? document.getElementById('mf-interval-unit').value : null;
+    const fixedDate    = !isInterval ? maintCalState['mf-cal-fixed'].selected : null;
+    const lastDone     = maintCalState['mf-cal-lastdone'].selected;
+    const category     = document.getElementById('mf-category').value;
+    const note         = document.getElementById('mf-note').value.trim();
+
+    try {
+      const photoURLs = [], photoStoragePaths = [];
+      for (var i = 0; i < maintAddPhotos.length; i++) {
+        prog.textContent = 'Uploading photo ' + (i+1) + ' of ' + maintAddPhotos.length + '…';
+        const path = 'photos/' + currentUser.uid + '/maint_' + Date.now() + '_' + i;
+        const url = await uploadPhoto(maintAddPhotos[i].file, path);
+        photoURLs.push(url); photoStoragePaths.push(path);
+      }
+      prog.textContent = 'Saving…';
+      const docRef = await addDoc(collection(db,'maintenance'), {
+        uid: currentUser.uid, name, category, note, scheduleType,
+        intervalVal, intervalUnit, fixedDate, lastDone,
+        photoURLs, photoStoragePaths, completionLog: [],
+        createdAt: Date.now()
+      });
+      maintItems.push({ docId: docRef.id, uid: currentUser.uid, name, category, note, scheduleType,
+        intervalVal, intervalUnit, fixedDate, lastDone,
+        photoURLs, photoStoragePaths, completionLog: [], createdAt: Date.now() });
+      prog.textContent = '';
+      closeMaintAddModal();
+      renderMaintList();
+      showToast('"' + name + '" task added!');
+    } catch(e) {
+      console.error('saveMaintTask error:', e);
+      showToast('Error: ' + (e.message || e.code || 'Unknown error'));
+      prog.textContent = '';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Add task';
+    }
+  };
+
+  // ── Edit modal ─────────────────────────────────────────
+  function openMaintEditModal(docId) {
+    const task = maintItems.find(function(t){ return t.docId === docId; });
+    if (!task) return;
+    editingMaintId = docId;
+
+    document.getElementById('mef-name').value     = task.name || '';
+    document.getElementById('mef-note').value     = task.note || '';
+    document.getElementById('mef-category').value = task.category || '';
+    document.getElementById('mef-interval-val').value  = task.intervalVal || '3';
+    document.getElementById('mef-interval-unit').value = task.intervalUnit || 'months';
+
+    const isInterval = task.scheduleType !== 'fixed';
+    maintFreqMode('edit', isInterval ? 'interval' : 'fixed');
+
+    // Restore calendar selections
+    ['mef-cal-fixed','mef-cal-lastdone'].forEach(maintCalInit);
+    if (task.fixedDate) {
+      maintCalState['mef-cal-fixed'].selected = task.fixedDate;
+      const d = document.getElementById('mef-display-fixed');
+      d.textContent = fmtDisplay(task.fixedDate); d.classList.remove('placeholder');
+    } else {
+      const d = document.getElementById('mef-display-fixed');
+      d.textContent = 'Select date'; d.classList.add('placeholder');
+    }
+    if (task.lastDone) {
+      maintCalState['mef-cal-lastdone'].selected = task.lastDone;
+      const d = document.getElementById('mef-display-lastdone');
+      d.textContent = fmtDisplay(task.lastDone); d.classList.remove('placeholder');
+    } else {
+      const d = document.getElementById('mef-display-lastdone');
+      d.textContent = 'Select date'; d.classList.add('placeholder');
+    }
+
+    // Photos
+    maintEditPhotos = (task.photoURLs || []).map(function(url, i){
+      return { url, storagePath: (task.photoStoragePaths||[])[i]||null, file: null };
+    });
+    refreshMaintPhotoPreview(maintEditPhotos, 'maint-edit-photo-preview', ['maint-edit-camera-btn','maint-edit-gallery-btn']);
+
+    // Completion history
+    const log = task.completionLog || [];
+    const logEl = document.getElementById('maint-log-list');
+    if (!log.length) {
+      logEl.innerHTML = '<div style="font-size:13px;color:var(--text-secondary);padding:6px 0;">No completions yet.</div>';
+    } else {
+      const sorted = log.slice().sort(function(a,b){ return b.date.localeCompare(a.date); });
+      logEl.innerHTML = sorted.map(function(entry){
+        const thumb = entry.photoURL ?
+          '<img class="maint-log-thumb" src="' + entry.photoURL + '" onclick="openLightbox(\'' + entry.photoURL + '\')" />' :
+          '<div class="maint-log-no-thumb">✅</div>';
+        return '<div class="maint-log-entry">' + thumb +
+          '<div class="maint-log-info">' +
+            '<div class="maint-log-date">' + fmtDisplay(entry.date) + '</div>' +
+            (entry.note ? '<div class="maint-log-note">' + entry.note + '</div>' : '') +
+          '</div></div>';
+      }).join('');
+    }
+
+    document.getElementById('maint-edit-progress').textContent = '';
+    document.getElementById('maint-edit-modal').classList.add('open');
+  }
+
+  function closeMaintEditModal() {
+    document.getElementById('maint-edit-modal').classList.remove('open');
+    document.querySelectorAll('.cal-popup.open').forEach(function(p){ p.classList.remove('open'); });
+    editingMaintId = null;
+  }
+
+  window.saveMaintEdit = async function() {
+    const name = document.getElementById('mef-name').value.trim();
+    if (!name) { showToast('Please enter a task name.'); return; }
+    const btn  = document.getElementById('maint-edit-save');
+    const prog = document.getElementById('maint-edit-progress');
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    const isInterval   = document.getElementById('mef-freq-type-interval').classList.contains('selected');
+    const scheduleType = isInterval ? 'interval' : 'fixed';
+    const intervalVal  = isInterval ? document.getElementById('mef-interval-val').value : null;
+    const intervalUnit = isInterval ? document.getElementById('mef-interval-unit').value : null;
+    const fixedDate    = !isInterval ? maintCalState['mef-cal-fixed'].selected : null;
+    const lastDone     = maintCalState['mef-cal-lastdone'].selected;
+    const category     = document.getElementById('mef-category').value;
+    const note         = document.getElementById('mef-note').value.trim();
+
+    try {
+      const origTask   = maintItems.find(function(t){ return t.docId === editingMaintId; });
+      const origPaths  = origTask ? (origTask.photoStoragePaths || []) : [];
+      const keptPaths  = maintEditPhotos.filter(function(p){ return !p.file; }).map(function(p){ return p.storagePath; });
+      const removed    = origPaths.filter(function(p){ return p && !keptPaths.includes(p); });
+      await Promise.all(removed.map(deleteStoragePhoto));
+
+      const finalURLs = [], finalPaths = [];
+      let ni = 0;
+      for (var i = 0; i < maintEditPhotos.length; i++) {
+        const ep = maintEditPhotos[i];
+        if (ep.file) {
+          prog.textContent = 'Uploading photo ' + (++ni) + '…';
+          const path = 'photos/' + currentUser.uid + '/maint_edit_' + Date.now() + '_' + i;
+          const url  = await uploadPhoto(ep.file, path);
+          finalURLs.push(url); finalPaths.push(path);
+        } else { finalURLs.push(ep.url); finalPaths.push(ep.storagePath); }
+      }
+
+      prog.textContent = 'Saving…';
+      await updateDoc(doc(db,'maintenance',editingMaintId), {
+        name, category, note, scheduleType, intervalVal, intervalUnit,
+        fixedDate, lastDone, photoURLs: finalURLs, photoStoragePaths: finalPaths
+      });
+
+      const idx = maintItems.findIndex(function(t){ return t.docId === editingMaintId; });
+      if (idx !== -1) {
+        maintItems[idx] = Object.assign({}, maintItems[idx], {
+          name, category, note, scheduleType, intervalVal, intervalUnit,
+          fixedDate, lastDone, photoURLs: finalURLs, photoStoragePaths: finalPaths
+        });
+      }
+
+      prog.textContent = '';
+      closeMaintEditModal();
+      renderMaintList();
+      showToast('"' + name + '" updated!');
+    } catch(e) {
+      console.error('saveMaintEdit error:', e);
+      showToast('Error: ' + (e.message || e.code || 'Unknown error'));
+      prog.textContent = '';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Save changes';
+    }
+  };
+
+  // ── Delete task ────────────────────────────────────────
+  async function deleteMaintTask(docId) {
+    const task = maintItems.find(function(t){ return t.docId === docId; });
+    if (!task) return;
+    if (!confirm('Delete "' + task.name + '"? This cannot be undone.')) return;
+    try {
+      await deleteDoc(doc(db,'maintenance',docId));
+      // Delete any storage photos
+      await Promise.all((task.photoStoragePaths||[]).map(deleteStoragePhoto));
+      // Delete log photos
+      (task.completionLog||[]).forEach(function(e){ if(e.photoStoragePath) deleteStoragePhoto(e.photoStoragePath); });
+      maintItems = maintItems.filter(function(t){ return t.docId !== docId; });
+      renderMaintList();
+      showToast('"' + task.name + '" deleted.');
+    } catch(e) {
+      console.error('deleteMaintTask error:', e);
+      showToast('Error: ' + (e.message || e.code || 'Unknown error'));
+    }
+  }
+
+  // ── Done confirmation modal ────────────────────────────
+  function openMaintDoneModal(docId) {
+    const task = maintItems.find(function(t){ return t.docId === docId; });
+    if (!task) return;
+    maintDoneTargetId = docId;
+    maintDonePhotos   = [];
+    document.getElementById('maint-done-desc').textContent = 'Mark "' + task.name + '" as done today?';
+    document.getElementById('maint-done-note').value = '';
+    refreshMaintPhotoPreview(maintDonePhotos, 'maint-done-photo-preview', ['maint-done-camera-btn','maint-done-gallery-btn']);
+    document.getElementById('maint-done-progress').textContent = '';
+    document.getElementById('maint-done-modal').classList.add('open');
+  }
+  function closeMaintDoneModal() {
+    document.getElementById('maint-done-modal').classList.remove('open');
+    maintDoneTargetId = null;
+    maintDonePhotos   = [];
+  }
+
+  window.confirmMaintDone = async function() {
+    if (!maintDoneTargetId) return;
+    const btn  = document.getElementById('maint-done-save');
+    const prog = document.getElementById('maint-done-progress');
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    const n = new Date();
+    const todayISO = toISO(n.getFullYear(), n.getMonth(), n.getDate());
+    const note = document.getElementById('maint-done-note').value.trim();
+
+    try {
+      let photoURL = null, photoStoragePath = null;
+      if (maintDonePhotos.length > 0) {
+        prog.textContent = 'Uploading photo…';
+        const path = 'photos/' + currentUser.uid + '/maint_done_' + Date.now();
+        photoURL = await uploadPhoto(maintDonePhotos[0].file, path);
+        photoStoragePath = path;
+      }
+
+      const task = maintItems.find(function(t){ return t.docId === maintDoneTargetId; });
+      const log  = (task.completionLog || []).slice();
+      const entry = { date: todayISO, note, photoURL, photoStoragePath };
+      log.unshift(entry); // newest first
+
+      // For fixed-date schedules, clear fixedDate once done
+      const updates = { lastDone: todayISO, completionLog: log };
+      if (task.scheduleType === 'fixed') updates.fixedDate = null;
+
+      prog.textContent = 'Saving…';
+      await updateDoc(doc(db,'maintenance', maintDoneTargetId), updates);
+
+      const idx = maintItems.findIndex(function(t){ return t.docId === maintDoneTargetId; });
+      if (idx !== -1) {
+        maintItems[idx] = Object.assign({}, maintItems[idx], updates);
+      }
+
+      prog.textContent = '';
+      closeMaintDoneModal();
+      renderMaintList();
+
+      const nextDue = calcNextDue(maintItems[idx] || task);
+      const msg = nextDue ? '✅ Done! Next due: ' + fmtDisplay(nextDue) : '✅ Marked as done!';
+      showToast(msg);
+    } catch(e) {
+      console.error('confirmMaintDone error:', e);
+      showToast('Error: ' + (e.message || e.code || 'Unknown error'));
+      prog.textContent = '';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Log as done';
+    }
+  };
+
+
 </script>
 </body>
 </html>
