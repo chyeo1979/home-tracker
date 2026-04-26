@@ -374,7 +374,8 @@
       </div>
     </div>
     <div class="field"><label>Item name</label><input type="text" id="f-name" placeholder="e.g. Milk, Microwave…" /></div>
-    <div class="field"><label>Note <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label><textarea id="f-note" placeholder="e.g. Keep refrigerated, receipt in drawer…" rows="3"></textarea></div>
+    <div class="field"><label>Quantity <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label><input type="text" id="f-qty" placeholder="e.g. 2, 500g, 1 pack…" /></div>
+    <div class="field"><label>Note <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label><textarea id="f-note" placeholder="e.g. Keep refrigerated, receipt in drawer…" rows="2"></textarea></div>
     <div class="row2">
       <div class="field date-field">
         <label>Purchase date</label>
@@ -420,7 +421,8 @@
       </div>
     </div>
     <div class="field"><label>Item name</label><input type="text" id="edit-name" placeholder="Item name" /></div>
-    <div class="field"><label>Note <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label><textarea id="edit-note" placeholder="e.g. Keep refrigerated, receipt in drawer…" rows="3"></textarea></div>
+    <div class="field"><label>Quantity <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label><input type="text" id="edit-qty" placeholder="e.g. 2, 500g, 1 pack…" /></div>
+    <div class="field"><label>Note <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label><textarea id="edit-note" placeholder="e.g. Keep refrigerated, receipt in drawer…" rows="2"></textarea></div>
     <div class="row2">
       <div class="field date-field">
         <label>Purchase date</label>
@@ -971,6 +973,7 @@
     }
 
     const note = document.getElementById('f-note').value.trim();
+    const qty  = document.getElementById('f-qty').value.trim();
     const btn  = document.getElementById('add-save-btn');
     const prog = document.getElementById('add-progress');
     btn.disabled = true; btn.textContent = 'Saving…';
@@ -989,14 +992,14 @@
 
       prog.textContent = 'Saving…';
       const docRef = await addDoc(collection(db,'items'), {
-        uid: currentUser.uid, name, type: currentType, note,
+        uid: currentUser.uid, name, type: currentType, note, qty,
         purchase: cal['purchase'].selected,
         expiry:   cal['expiry'].selected,
         photoURLs, photoStoragePaths,
         createdAt: Date.now()
       });
 
-      items.unshift({ docId: docRef.id, uid: currentUser.uid, name, type: currentType, note,
+      items.unshift({ docId: docRef.id, uid: currentUser.uid, name, type: currentType, note, qty,
         purchase: cal['purchase'].selected, expiry: cal['expiry'].selected,
         photoURLs, photoStoragePaths, createdAt: Date.now() });
 
@@ -1043,6 +1046,7 @@
     editingDocId = docId;
     editType = it.type;
     document.getElementById('edit-name').value = it.name;
+    document.getElementById('edit-qty').value  = it.qty || '';
     document.getElementById('edit-note').value = it.note || '';
     editSelectType(it.type);
 
@@ -1080,6 +1084,7 @@
   window.saveEdit = async function() {
     const name = document.getElementById('edit-name').value.trim();
     const note = document.getElementById('edit-note').value.trim();
+    const qty  = document.getElementById('edit-qty').value.trim();
     if (!name) { showToast('Please enter an item name.'); return; }
     if (document.getElementById('err-edit-purchase').classList.contains('visible') ||
         document.getElementById('err-edit-expiry').classList.contains('visible')) {
@@ -1115,7 +1120,7 @@
 
       prog.textContent = 'Saving…';
       await updateDoc(doc(db,'items',editingDocId), {
-        name, type: editType, note,
+        name, type: editType, note, qty,
         purchase: cal['edit-purchase'].selected,
         expiry:   cal['edit-expiry'].selected,
         photoURLs: finalURLs, photoStoragePaths: finalPaths
@@ -1123,7 +1128,7 @@
 
       const idx = items.findIndex(function(i) { return i.docId === editingDocId; });
       if (idx !== -1) {
-        items[idx] = Object.assign({}, items[idx], { name, type: editType, note,
+        items[idx] = Object.assign({}, items[idx], { name, type: editType, note, qty,
           purchase: cal['edit-purchase'].selected, expiry: cal['edit-expiry'].selected,
           photoURLs: finalURLs, photoStoragePaths: finalPaths });
       }
@@ -1195,6 +1200,7 @@
   window.openAddModal = function() {
     currentType = 'food'; selectType('food');
     document.getElementById('f-name').value = '';
+    document.getElementById('f-qty').value  = '';
     document.getElementById('f-note').value = '';
     clearDate(null,'purchase'); clearDate(null,'expiry');
     ['err-purchase','err-expiry'].forEach(function(id){ var el=document.getElementById(id); if(el){el.classList.remove('visible');} });
