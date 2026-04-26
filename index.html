@@ -568,19 +568,23 @@
   let editingDocId = null;
   let editType     = 'food';
   let searchQuery  = '';
-  // Safe localStorage wrapper — detects if storage is blocked (e.g. Brave Shields)
-  // Brave silently accepts writes but doesn't persist them, so we write then read back to verify
-  const storageAvailable = (function() {
-    try {
-      localStorage.setItem('__test__', 'ok');
-      const ok = localStorage.getItem('__test__') === 'ok';
-      localStorage.removeItem('__test__');
-      return ok;
-    } catch(e) { return false; }
-  })();
+  // Persistent store — tries localStorage first, falls back to cookies (works in Brave)
   const store = {
-    get: function(key) { try { return localStorage.getItem(key); } catch(e) { return null; } },
-    set: function(key, val) { try { localStorage.setItem(key, val); } catch(e) {} }
+    get: function(key) {
+      try {
+        const v = localStorage.getItem(key);
+        if (v !== null) return v;
+      } catch(e) {}
+      // fallback: read from cookie
+      const match = document.cookie.match('(?:^|;)\\s*' + key + '=([^;]*)');
+      return match ? decodeURIComponent(match[1]) : null;
+    },
+    set: function(key, val) {
+      try { localStorage.setItem(key, val); } catch(e) {}
+      // always also write cookie as fallback (1 year expiry)
+      const exp = new Date(Date.now() + 365*24*60*60*1000).toUTCString();
+      document.cookie = key + '=' + encodeURIComponent(val) + '; expires=' + exp + '; path=/';
+    }
   };
 
   let sortBy = store.get('hometracker-sortby') || 'expiry';
@@ -1722,13 +1726,8 @@
     store.set('hometracker-theme', !isDark ? 'dark' : 'light');
   };
 
-  // Init theme — lock to dark and hide toggle if storage is blocked, otherwise use saved/OS preference
+  // Init theme — use saved preference (localStorage or cookie), fallback to OS preference
   (function() {
-    if (!storageAvailable) {
-      applyTheme(true);
-      document.getElementById('theme-toggle').style.display = 'none';
-      return;
-    }
     const saved = store.get('hometracker-theme');
     if (saved) {
       applyTheme(saved === 'dark');
