@@ -1147,11 +1147,16 @@
     const idx = items.findIndex(function(i) { return i.docId === docId; });
     if (idx === -1) return;
     const item = items[idx];
+
+    // Optimistic UI — remove instantly so there's no perceived lag
+    items.splice(idx, 1);
+    renderItems();
+    showToast('"' + item.name + '" removed.');
+
     try {
-      await deleteDoc(doc(db,'items',docId));
       const archivedURLs  = item.photoURLs || [];
       const archivedPaths = item.photoStoragePaths || [];
-      items.splice(idx, 1);
+      await deleteDoc(doc(db,'items',docId));
 
       // Archive to deleted collection — keep Storage URLs so they remain accessible
       const archived = { uid: currentUser.uid, name: item.name, type: item.type,
@@ -1159,10 +1164,12 @@
         photoURLs: archivedURLs, photoStoragePaths: archivedPaths, deletedAt: Date.now() };
       const dref = await addDoc(collection(db,'deleted'), archived);
       deletedItems.unshift({ docId: dref.id, ...archived });
-
+    } catch(e) {
+      // Firestore failed — restore the item and re-render
+      items.splice(idx, 0, item);
       renderItems();
-      showToast('"' + item.name + '" removed.');
-    } catch(e) { showToast('Error removing item.'); }
+      showToast('Error removing item — restored.');
+    }
   };
 
   /* ── Edit modal ── */
