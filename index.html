@@ -826,6 +826,15 @@
   let shopItems    = [];   // { docId, name, qty, note, checked, addedToInventory }
   let activeTab    = 'inventory';
 
+  // Maintenance state
+  let maintItems       = [];
+  let editingMaintId   = null;
+  let maintAddPhotos   = [];
+  let maintEditPhotos  = [];
+  let maintDonePhotos  = [];
+  let maintDoneTargetId = null;
+  const maintCalState  = {};
+
   const cal = {};
   function initCal(id) { const n = new Date(); cal[id] = { year: n.getFullYear(), month: n.getMonth(), selected: null }; }
   ['purchase','expiry','edit-purchase','edit-expiry'].forEach(initCal);
@@ -2095,13 +2104,7 @@
      MAINTENANCE MODULE
   ════════════════════════════════════════════════════ */
 
-  let maintItems       = [];          // all tasks from Firestore
-  let editingMaintId   = null;
-  let maintAddPhotos   = [];          // { file, previewUrl }
-  let maintEditPhotos  = [];          // { url, storagePath } | { file, previewUrl }
-  let maintDonePhotos  = [];          // for the done-confirmation modal
-  let maintDoneTargetId = null;       // docId being confirmed
-  const maintCalState  = {};          // mini calendar states for maint modals
+
 
   // ── Category icons ──────────────────────────────────
   function maintCatIcon(cat) {
