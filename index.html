@@ -439,7 +439,7 @@
 
 <!-- ADD MODAL -->
 <div class="modal-overlay" id="add-modal">
-  <div class="modal">
+  <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
       <h2>Add item</h2>
       <button class="modal-close" id="add-modal-close">✕</button>
@@ -488,7 +488,7 @@
 
 <!-- EDIT MODAL -->
 <div class="modal-overlay" id="edit-modal">
-  <div class="modal">
+  <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
       <h2>Edit item</h2>
       <button class="modal-close" id="edit-modal-close">✕</button>
@@ -537,7 +537,7 @@
 
 <!-- HISTORY MODAL -->
 <div class="modal-overlay" id="history-modal">
-  <div class="modal">
+  <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
       <h2>🗑️ Recently removed</h2>
       <button class="modal-close" id="history-modal-close">✕</button>
@@ -552,7 +552,7 @@
 
 <!-- ADD SHOPPING ITEM MODAL -->
 <div class="modal-overlay" id="shop-add-modal">
-  <div class="modal">
+  <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
       <h2>Add to shopping list</h2>
       <button class="modal-close" id="shop-add-close">✕</button>
@@ -571,7 +571,7 @@
 
 <!-- CHECKOUT MODAL -->
 <div class="modal-overlay" id="checkout-modal">
-  <div class="modal">
+  <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
       <h2>Done Shopping</h2>
       <button class="modal-close" id="checkout-close">✕</button>
@@ -588,7 +588,7 @@
 
 <!-- MAINTENANCE: ADD TASK MODAL -->
 <div class="modal-overlay" id="maint-add-modal">
-  <div class="modal">
+  <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
       <h2>Add maintenance task</h2>
       <button class="modal-close" id="maint-add-close">✕</button>
@@ -657,7 +657,7 @@
 
 <!-- MAINTENANCE: EDIT TASK MODAL -->
 <div class="modal-overlay" id="maint-edit-modal">
-  <div class="modal">
+  <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
       <h2>Edit task</h2>
       <button class="modal-close" id="maint-edit-close">✕</button>
@@ -731,7 +731,7 @@
 
 <!-- MAINTENANCE: DONE CONFIRMATION MODAL -->
 <div class="modal-overlay" id="maint-done-modal">
-  <div class="modal">
+  <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
       <h2>✅ Mark as done</h2>
       <button class="modal-close" id="maint-done-close">✕</button>
@@ -2043,38 +2043,6 @@
   document.getElementById('tab-shopping').addEventListener('click', function(){ switchTab('shopping'); });
   document.getElementById('tab-maintenance').addEventListener('click', function(){ switchTab('maintenance'); });
 
-  // Maintenance add modal
-  document.getElementById('maint-add-close').addEventListener('click', closeMaintAddModal);
-  document.getElementById('maint-add-cancel').addEventListener('click', closeMaintAddModal);
-  document.getElementById('maint-add-save').addEventListener('click', saveMaintTask);
-  document.getElementById('maint-add-modal').addEventListener('click', function(e){ if(e.target===this) closeMaintAddModal(); });
-  document.getElementById('mf-freq-type-interval').addEventListener('click', function(){ maintFreqMode('add','interval'); });
-  document.getElementById('mf-freq-type-fixed').addEventListener('click', function(){ maintFreqMode('add','fixed'); });
-  document.getElementById('mf-btn-fixed').addEventListener('click', function(e){ toggleMaintCal(e,'mf-cal-fixed','mf-btn-fixed','mf-display-fixed'); });
-  document.getElementById('mf-btn-lastdone').addEventListener('click', function(e){ toggleMaintCal(e,'mf-cal-lastdone','mf-btn-lastdone','mf-display-lastdone'); });
-  document.getElementById('maint-add-camera-input').addEventListener('change', function(e){ handleMaintAddPhoto(e); });
-  document.getElementById('maint-add-gallery-input').addEventListener('change', function(e){ handleMaintAddPhoto(e); });
-
-  // Maintenance edit modal
-  document.getElementById('maint-edit-close').addEventListener('click', closeMaintEditModal);
-  document.getElementById('maint-edit-cancel').addEventListener('click', closeMaintEditModal);
-  document.getElementById('maint-edit-save').addEventListener('click', saveMaintEdit);
-  document.getElementById('maint-edit-modal').addEventListener('click', function(e){ if(e.target===this) closeMaintEditModal(); });
-  document.getElementById('mef-freq-type-interval').addEventListener('click', function(){ maintFreqMode('edit','interval'); });
-  document.getElementById('mef-freq-type-fixed').addEventListener('click', function(){ maintFreqMode('edit','fixed'); });
-  document.getElementById('mef-btn-fixed').addEventListener('click', function(e){ toggleMaintCal(e,'mef-cal-fixed','mef-btn-fixed','mef-display-fixed'); });
-  document.getElementById('mef-btn-lastdone').addEventListener('click', function(e){ toggleMaintCal(e,'mef-cal-lastdone','mef-btn-lastdone','mef-display-lastdone'); });
-  document.getElementById('maint-edit-camera-input').addEventListener('change', function(e){ handleMaintEditPhoto(e); });
-  document.getElementById('maint-edit-gallery-input').addEventListener('change', function(e){ handleMaintEditPhoto(e); });
-
-  // Maintenance done modal
-  document.getElementById('maint-done-close').addEventListener('click', closeMaintDoneModal);
-  document.getElementById('maint-done-cancel').addEventListener('click', closeMaintDoneModal);
-  document.getElementById('maint-done-save').addEventListener('click', confirmMaintDone);
-  document.getElementById('maint-done-modal').addEventListener('click', function(e){ if(e.target===this) closeMaintDoneModal(); });
-  document.getElementById('maint-done-camera-input').addEventListener('change', function(e){ handleMaintDonePhoto(e); });
-  document.getElementById('maint-done-gallery-input').addEventListener('change', function(e){ handleMaintDonePhoto(e); });
-
   // Shopping add modal
   document.getElementById('shop-add-close').addEventListener('click', closeShopAddModal);
   document.getElementById('shop-add-cancel').addEventListener('click', closeShopAddModal);
@@ -2662,6 +2630,34 @@
     }
   };
 
+
+  // ── Maintenance event listeners (registered after functions are defined) ──
+  document.getElementById('maint-add-close').addEventListener('click', closeMaintAddModal);
+  document.getElementById('maint-add-cancel').addEventListener('click', closeMaintAddModal);
+  document.getElementById('maint-add-save').addEventListener('click', saveMaintTask);
+  document.getElementById('maint-add-modal').addEventListener('click', function(e){ if(e.target===this) closeMaintAddModal(); });
+  document.getElementById('mf-freq-type-interval').addEventListener('click', function(){ maintFreqMode('add','interval'); });
+  document.getElementById('mf-freq-type-fixed').addEventListener('click', function(){ maintFreqMode('add','fixed'); });
+  document.getElementById('mf-btn-fixed').addEventListener('click', function(e){ toggleMaintCal(e,'mf-cal-fixed','mf-btn-fixed','mf-display-fixed'); });
+  document.getElementById('mf-btn-lastdone').addEventListener('click', function(e){ toggleMaintCal(e,'mf-cal-lastdone','mf-btn-lastdone','mf-display-lastdone'); });
+  document.getElementById('maint-add-camera-input').addEventListener('change', function(e){ handleMaintAddPhoto(e); });
+  document.getElementById('maint-add-gallery-input').addEventListener('change', function(e){ handleMaintAddPhoto(e); });
+  document.getElementById('maint-edit-close').addEventListener('click', closeMaintEditModal);
+  document.getElementById('maint-edit-cancel').addEventListener('click', closeMaintEditModal);
+  document.getElementById('maint-edit-save').addEventListener('click', saveMaintEdit);
+  document.getElementById('maint-edit-modal').addEventListener('click', function(e){ if(e.target===this) closeMaintEditModal(); });
+  document.getElementById('mef-freq-type-interval').addEventListener('click', function(){ maintFreqMode('edit','interval'); });
+  document.getElementById('mef-freq-type-fixed').addEventListener('click', function(){ maintFreqMode('edit','fixed'); });
+  document.getElementById('mef-btn-fixed').addEventListener('click', function(e){ toggleMaintCal(e,'mef-cal-fixed','mef-btn-fixed','mef-display-fixed'); });
+  document.getElementById('mef-btn-lastdone').addEventListener('click', function(e){ toggleMaintCal(e,'mef-cal-lastdone','mef-btn-lastdone','mef-display-lastdone'); });
+  document.getElementById('maint-edit-camera-input').addEventListener('change', function(e){ handleMaintEditPhoto(e); });
+  document.getElementById('maint-edit-gallery-input').addEventListener('change', function(e){ handleMaintEditPhoto(e); });
+  document.getElementById('maint-done-close').addEventListener('click', closeMaintDoneModal);
+  document.getElementById('maint-done-cancel').addEventListener('click', closeMaintDoneModal);
+  document.getElementById('maint-done-save').addEventListener('click', confirmMaintDone);
+  document.getElementById('maint-done-modal').addEventListener('click', function(e){ if(e.target===this) closeMaintDoneModal(); });
+  document.getElementById('maint-done-camera-input').addEventListener('change', function(e){ handleMaintDonePhoto(e); });
+  document.getElementById('maint-done-gallery-input').addEventListener('change', function(e){ handleMaintDonePhoto(e); });
 
 </script>
 </body>
