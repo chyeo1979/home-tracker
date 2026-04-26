@@ -26,7 +26,8 @@
     .container { max-width: 680px; margin: 0 auto; }
 
     /* Auth screen */
-    #auth-screen { display: flex; align-items: center; justify-content: center; min-height: 80vh; visibility: hidden; }
+    #auth-screen { display: flex; align-items: center; justify-content: center; min-height: 80vh; opacity: 0; transition: opacity 0.2s; }
+    #auth-screen.visible { opacity: 1; }
     .auth-card { background: var(--bg-primary); border: 0.5px solid var(--border-mid); border-radius: var(--radius-lg); padding: 2rem; width: 100%; max-width: 380px; text-align: center; }
     .auth-card h1 { font-size: 26px; font-weight: 600; margin-bottom: 6px; }
     .auth-card p { font-size: 14px; color: var(--text-secondary); margin-bottom: 2rem; }
@@ -36,7 +37,8 @@
     .auth-error { font-size: 13px; color: #A32D2D; margin-top: 12px; min-height: 18px; }
 
     /* App */
-    #app-screen { display: none; visibility: hidden; }
+    #app-screen { display: none; opacity: 0; transition: opacity 0.2s; }
+    #app-screen.visible { opacity: 1; }
     .header { margin-bottom: 1.5rem; display: flex; align-items: flex-start; justify-content: space-between; }
     .header-left h1 { font-size: 26px; font-weight: 600; }
     .header-left p { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
@@ -604,17 +606,29 @@
     currentUser = user;
     if (user) {
       document.getElementById('auth-screen').style.display = 'none';
-      document.getElementById('app-screen').style.display  = 'block';
-      document.getElementById('app-screen').style.visibility = 'visible';
+      const appEl = document.getElementById('app-screen');
+      appEl.style.display = 'block';
+      requestAnimationFrame(function(){ appEl.classList.add('visible'); });
       populateAccountChip(user);
       loadItems();
       loadShopItems();
     } else {
-      document.getElementById('auth-screen').style.display = 'flex';
-      document.getElementById('auth-screen').style.visibility = 'visible';
-      document.getElementById('app-screen').style.display  = 'none';
+      const authEl = document.getElementById('auth-screen');
+      authEl.style.display = 'flex';
+      requestAnimationFrame(function(){ authEl.classList.add('visible'); });
+      document.getElementById('app-screen').style.display = 'none';
     }
   });
+
+  // Safety fallback — show login if Firebase hasn't responded in 5s
+  setTimeout(function() {
+    const appEl  = document.getElementById('app-screen');
+    const authEl = document.getElementById('auth-screen');
+    if (!appEl.classList.contains('visible') && !authEl.classList.contains('visible')) {
+      authEl.style.display = 'flex';
+      authEl.classList.add('visible');
+    }
+  }, 5000);
 
   /* ── Tab switching ── */
   function switchTab(tab) {
@@ -832,12 +846,12 @@
       '<button class="cal-nav-btn" onclick="checkoutCalNav(\'' + calId + '\',-1)">‹</button>' +
       '<div class="cal-selects"><span style="font-size:13px;font-weight:500;">' + MONTHS[m] + ' ' + y + '</span></div>' +
       '<button class="cal-nav-btn" onclick="checkoutCalNav(\'' + calId + '\',1)">›</button></div>';
-    html += '<div class="cal-grid">' + DOW.map(function(d){ return '<div class="cal-dow">'+d+'</div>'; }).join('');
+    html += '<div class="cal-grid">' + DOW.map(function(dow){ return '<div class="cal-dow">'+dow+'</div>'; }).join('');
     for (var i = 0; i < first; i++) html += '<div></div>';
-    for (var d = 1; d <= daysInMonth; d++) {
-      const iso = toISO(y, m, d);
+    for (var day = 1; day <= daysInMonth; day++) {
+      const iso = toISO(y, m, day);
       const cls = ['cal-day', iso === todayISO ? 'today' : '', state.selected === iso ? 'selected' : ''].filter(Boolean).join(' ');
-      html += '<button class="' + cls + '" onclick="checkoutCalPick(\'' + calId + '\',\'' + iso + '\')">' + d + '</button>';
+      html += '<button class="' + cls + '" onclick="checkoutCalPick(\'' + calId + '\',\'' + iso + '\')">' + day + '</button>';
     }
     html += '</div>';
     html += '<button class="cal-clear" onclick="checkoutCalClear(\'' + calId + '\')">Clear date</button>';
