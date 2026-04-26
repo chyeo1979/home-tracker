@@ -10,7 +10,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      color-scheme: light;
+      color-scheme: light only;
       --bg-primary: #ffffff; --bg-secondary: #f5f5f3; --bg-tertiary: #eeede8;
       --text-primary: #1a1a18; --text-secondary: #6b6b67;
       --border-light: rgba(0,0,0,0.12); --border-mid: rgba(0,0,0,0.22);
@@ -20,15 +20,27 @@
       --btn-fab-bg: #1a1a18; --btn-fab-color: #ffffff;
     }
     [data-theme="dark"] {
-      color-scheme: dark;
+      color-scheme: dark only;
       --bg-primary: #1e1e1c; --bg-secondary: #2a2a27; --bg-tertiary: #333330;
       --text-primary: #f0efe8; --text-secondary: #9b9b95;
       --border-light: rgba(255,255,255,0.1); --border-mid: rgba(255,255,255,0.2);
       --accent-bg: #04342C; --accent-dark: #5DCAA5;
       --btn-fab-bg: #f0efe8; --btn-fab-color: #1e1e1c;
     }
+    /* Force Brave/browser dark mode override to not interfere */
+    html, body { background: var(--bg-tertiary) !important; color: var(--text-primary) !important; }
+    .modal, .auth-card, .item-card, .stat, .shop-item,
+    .account-chip, .account-dropdown, .cal-popup,
+    .date-input-btn, .field input, .field textarea { 
+      background: var(--bg-primary) !important; 
+      color: var(--text-primary) !important;
+      border-color: var(--border-mid) !important;
+    }
+    .tabs, .summary-bar .stat { background: var(--bg-secondary) !important; }
+    .tab-btn.active { background: var(--bg-primary) !important; color: var(--text-primary) !important; }
+    .tab-btn { color: var(--text-secondary) !important; }
 
-    body { font-family: var(--font); background: var(--bg-tertiary); color: var(--text-primary); min-height: 100vh; padding: 2rem 1rem; }
+    body { font-family: var(--font); background: var(--bg-tertiary) !important; color: var(--text-primary) !important; min-height: 100vh; padding: 2rem 1rem; }
     .container { max-width: 680px; margin: 0 auto; }
 
     /* Auth screen */
