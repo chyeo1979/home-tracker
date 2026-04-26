@@ -565,7 +565,7 @@
   let editingDocId = null;
   let editType     = 'food';
   let searchQuery  = '';
-  let sortBy       = 'expiry';
+  let sortBy       = localStorage.getItem('hometracker-sortby') || 'expiry';
 
   // Shopping list state
   let shopItems    = [];   // { docId, name, qty, note, checked, addedToInventory }
@@ -1699,6 +1699,8 @@
 
   // Init theme (dark by default)
   applyTheme(localStorage.getItem('hometracker-theme') !== 'light');
+  // Restore saved sort preference
+  document.getElementById('sort-by').value = sortBy;
   setupCameraButtons();
 
   // ── Attach all event listeners (module scope safe) ──
@@ -1728,7 +1730,7 @@
   // Filters
   document.getElementById('filter-type').addEventListener('change', renderItems);
   document.getElementById('filter-status').addEventListener('change', renderItems);
-  document.getElementById('sort-by').addEventListener('change', function(){ sortBy = this.value; renderItems(); });
+  document.getElementById('sort-by').addEventListener('change', function(){ sortBy = this.value; localStorage.setItem('hometracker-sortby', sortBy); renderItems(); });
 
   // Add modal
   document.getElementById('add-modal-close').addEventListener('click', closeAddModal);
