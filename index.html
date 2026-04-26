@@ -822,8 +822,10 @@
       const calId = 'co-expiry-' + idx;
       const purCalId = 'co-purchase-' + idx;
       const n = new Date();
-      checkoutCals[calId]    = { year: n.getFullYear(), month: n.getMonth(), selected: null, btnId: 'co-btn-' + idx,     displayId: 'co-display-' + idx,     popupId: 'co-popup-' + idx };
-      checkoutCals[purCalId] = { year: n.getFullYear(), month: n.getMonth(), selected: null, btnId: 'co-pur-btn-' + idx, displayId: 'co-pur-display-' + idx, popupId: 'co-pur-popup-' + idx };
+      const todayISO = toISO(n.getFullYear(), n.getMonth(), n.getDate());
+      checkoutCals[calId]    = { year: n.getFullYear(), month: n.getMonth(), selected: null,     btnId: 'co-btn-' + idx,     displayId: 'co-display-' + idx,     popupId: 'co-popup-' + idx };
+      checkoutCals[purCalId] = { year: n.getFullYear(), month: n.getMonth(), selected: todayISO, btnId: 'co-pur-btn-' + idx, displayId: 'co-pur-display-' + idx, popupId: 'co-pur-popup-' + idx };
+      const todayLabel = fmtDisplay(todayISO);
       return '<div class="checkout-item" data-shopid="' + it.docId + '" data-idx="' + idx + '">' +
         '<div class="checkout-item-header">' +
           '<span class="checkout-item-name">' + it.name + '</span>' +
@@ -840,7 +842,7 @@
           '<div class="checkout-field" style="position:relative;">' +
             '<label>Purchase date <span style="font-weight:400;color:var(--text-secondary)">(optional)</span></label>' +
             '<button class="date-input-btn" id="co-pur-btn-' + idx + '" style="font-size:13px;padding:7px 9px;">' +
-              '<span id="co-pur-display-' + idx + '" class="placeholder" style="font-size:13px;">Select date</span>' +
+              '<span id="co-pur-display-' + idx + '" style="font-size:13px;">' + todayLabel + '</span>' +
               '<span class="cal-icon">📅</span>' +
             '</button>' +
             '<div class="cal-popup" id="co-pur-popup-' + idx + '" style="position:absolute;top:100%;left:0;z-index:700;"></div>' +
@@ -1320,7 +1322,16 @@
     document.getElementById('f-name').value = '';
     document.getElementById('f-qty').value  = '1';
     document.getElementById('f-note').value = '';
-    clearDate(null,'purchase'); clearDate(null,'expiry');
+    // Default purchase date to today
+    const _n = new Date();
+    const _todayISO = toISO(_n.getFullYear(), _n.getMonth(), _n.getDate());
+    if (!cal['purchase']) initCal('purchase');
+    cal['purchase'].selected = _todayISO;
+    cal['purchase'].year  = _n.getFullYear();
+    cal['purchase'].month = _n.getMonth();
+    const _sp = document.getElementById('display-purchase');
+    _sp.textContent = fmtDisplay(_todayISO); _sp.classList.remove('placeholder');
+    clearDate(null,'expiry');
     ['err-purchase','err-expiry'].forEach(function(id){ var el=document.getElementById(id); if(el){el.classList.remove('visible');} });
     ['btn-purchase','btn-expiry'].forEach(function(id){ var el=document.getElementById(id); if(el){el.classList.remove('error');} });
     addPhotos = []; refreshAddPhotoPreview();
