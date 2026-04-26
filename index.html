@@ -346,7 +346,10 @@
     <div id="view-shopping" style="display:none;">
       <div class="shop-done-bar">
         <span class="shop-count" id="shop-count">0 items</span>
-        <button class="shop-done-btn" id="shop-done-btn" disabled>Done Shopping</button>
+        <div style="display:flex;gap:8px;">
+          <button class="cancel-btn" id="shop-clear-btn" style="font-size:13px;padding:7px 14px;display:none;">Clear added</button>
+          <button class="shop-done-btn" id="shop-done-btn" disabled>Done Shopping</button>
+        </div>
       </div>
       <div class="shop-list" id="shop-list"><div class="empty"><div class="big">🛒</div>Your shopping list is empty — tap ＋ to add items.</div></div>
     </div>
@@ -378,7 +381,7 @@
     </div>
     <div class="field"><label>Item name</label><input type="text" id="f-name" placeholder="e.g. Milk, Microwave…" /></div>
     <div class="field"><label>Quantity <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label>
-      <div class="qty-stepper"><button type="button" onclick="stepQty('f-qty',-1)">−</button><input type="number" id="f-qty" min="0" placeholder="—" /><button type="button" onclick="stepQty('f-qty',1)">＋</button></div>
+      <div class="qty-stepper"><button type="button" onclick="stepQty('f-qty',-1)">−</button><input type="number" id="f-qty" min="0" value="1" /><button type="button" onclick="stepQty('f-qty',1)">＋</button></div>
     </div>
     <div class="field"><label>Note <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label><textarea id="f-note" placeholder="e.g. Keep refrigerated, receipt in drawer…" rows="2"></textarea></div>
     <div class="row2">
@@ -427,7 +430,7 @@
     </div>
     <div class="field"><label>Item name</label><input type="text" id="edit-name" placeholder="Item name" /></div>
     <div class="field"><label>Quantity <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label>
-      <div class="qty-stepper"><button type="button" onclick="stepQty('edit-qty',-1)">−</button><input type="number" id="edit-qty" min="0" placeholder="—" /><button type="button" onclick="stepQty('edit-qty',1)">＋</button></div>
+      <div class="qty-stepper"><button type="button" onclick="stepQty('edit-qty',-1)">−</button><input type="number" id="edit-qty" min="0" value="1" /><button type="button" onclick="stepQty('edit-qty',1)">＋</button></div>
     </div>
     <div class="field"><label>Note <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label><textarea id="edit-note" placeholder="e.g. Keep refrigerated, receipt in drawer…" rows="2"></textarea></div>
     <div class="row2">
@@ -484,7 +487,7 @@
     </div>
     <div class="field"><label>Item name</label><input type="text" id="shop-f-name" placeholder="e.g. Milk, Eggs…" /></div>
     <div class="field"><label>Quantity <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label>
-      <div class="qty-stepper"><button type="button" onclick="stepQty('shop-f-qty',-1)">−</button><input type="number" id="shop-f-qty" min="0" placeholder="—" /><button type="button" onclick="stepQty('shop-f-qty',1)">＋</button></div>
+      <div class="qty-stepper"><button type="button" onclick="stepQty('shop-f-qty',-1)">−</button><input type="number" id="shop-f-qty" min="0" value="1" /><button type="button" onclick="stepQty('shop-f-qty',1)">＋</button></div>
     </div>
     <div class="field"><label>Note <span style="color:var(--text-secondary);font-weight:400;">(optional)</span></label><textarea id="shop-f-note" placeholder="e.g. Full cream, brand preference…" rows="2"></textarea></div>
     <div class="modal-actions">
@@ -693,8 +696,10 @@
   function renderShopList() {
     const list = document.getElementById('shop-list');
     const checked = shopItems.filter(function(i){ return i.checked && !i.addedToInventory; }).length;
+    const added   = shopItems.filter(function(i){ return i.addedToInventory; }).length;
     document.getElementById('shop-count').textContent = shopItems.length + ' item' + (shopItems.length !== 1 ? 's' : '') + (checked ? ' · ' + checked + ' selected' : '');
     document.getElementById('shop-done-btn').disabled = checked === 0;
+    document.getElementById('shop-clear-btn').style.display = added > 0 ? '' : 'none';
 
     if (!shopItems.length) {
       list.innerHTML = '<div class="empty"><div class="big">🛒</div>Your shopping list is empty — tap ＋ to add items.</div>';
@@ -746,10 +751,20 @@
     catch(e) { showToast('Error removing item.'); }
   }
 
+  /* ── Shopping list: clear added items ── */
+  async function clearAddedShopItems() {
+    const toRemove = shopItems.filter(function(i){ return i.addedToInventory; });
+    shopItems = shopItems.filter(function(i){ return !i.addedToInventory; });
+    renderShopList();
+    try {
+      await Promise.all(toRemove.map(function(i){ return deleteDoc(doc(db,'shopping',i.docId)); }));
+    } catch(e) { showToast('Error clearing items.'); }
+  }
+
   /* ── Shopping list: add modal ── */
   window.openShopAddModal = function() {
     document.getElementById('shop-f-name').value = '';
-    document.getElementById('shop-f-qty').value  = '';
+    document.getElementById('shop-f-qty').value  = '1';
     document.getElementById('shop-f-note').value = '';
     document.getElementById('shop-add-modal').classList.add('open');
     setTimeout(function(){ document.getElementById('shop-f-name').focus(); }, 100);
@@ -777,17 +792,34 @@
   };
 
   /* ── Checkout modal ── */
-  // Map of calId → checkout cal state
   const checkoutCals = {};
+  let checkoutPhotos = {};   // idx → [{ file, previewUrl }]
+
+  window.removeCheckoutPhoto = function(idx, photoIdx) {
+    checkoutPhotos[idx].splice(photoIdx, 1);
+    renderCheckoutPhotoPreview(idx);
+  };
+
+  function renderCheckoutPhotoPreview(idx) {
+    const preview = document.getElementById('co-photo-preview-' + idx);
+    if (!preview) return;
+    const photos = checkoutPhotos[idx] || [];
+    preview.innerHTML = photos.map(function(p, pi) {
+      return '<div style="position:relative;width:60px;height:60px;flex-shrink:0;">' +
+        '<img src="' + p.previewUrl + '" style="width:60px;height:60px;object-fit:cover;border-radius:var(--radius-md);border:0.5px solid var(--border-light);" />' +
+        '<button onclick="removeCheckoutPhoto(' + idx + ',' + pi + ')" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:#A32D2D;color:#fff;border:2px solid var(--bg-primary);font-size:9px;cursor:pointer;line-height:16px;text-align:center;padding:0;">✕</button>' +
+      '</div>';
+    }).join('');
+  }
 
   window.openCheckoutModal = function() {
+    checkoutPhotos = {};
     const toCheckout = shopItems.filter(function(i){ return i.checked && !i.addedToInventory; });
     if (!toCheckout.length) return;
 
     // Build checkout items HTML with individual expiry date pickers
     const html = toCheckout.map(function(it, idx) {
       const calId = 'co-expiry-' + idx;
-      // init cal state
       const n = new Date();
       checkoutCals[calId] = { year: n.getFullYear(), month: n.getMonth(), selected: null, btnId: 'co-btn-' + idx, displayId: 'co-display-' + idx, popupId: 'co-popup-' + idx };
       return '<div class="checkout-item" data-shopid="' + it.docId + '" data-idx="' + idx + '">' +
@@ -812,6 +844,17 @@
             '<div class="cal-popup" id="co-popup-' + idx + '"></div>' +
           '</div>' +
         '</div>' +
+        '<div class="checkout-field" style="margin-top:8px;">' +
+          '<label>Note <span style="font-weight:400;color:var(--text-secondary)">(optional)</span></label>' +
+          '<textarea id="co-note-' + idx + '" rows="2" style="width:100%;padding:7px 9px;font-size:13px;font-family:var(--font);border:0.5px solid var(--border-mid);border-radius:var(--radius-md);background:var(--bg-primary);color:var(--text-primary);outline:none;resize:vertical;">' + (it.note || '') + '</textarea>' +
+        '</div>' +
+        '<div class="checkout-field" style="margin-top:8px;">' +
+          '<label>Photos <span style="font-weight:400;color:var(--text-secondary)">(optional, up to 3)</span></label>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">' +
+            '<label style="display:flex;align-items:center;gap:6px;padding:7px 12px;border:0.5px dashed var(--border-mid);border-radius:var(--radius-md);background:var(--bg-secondary);cursor:pointer;font-size:12px;color:var(--text-secondary);">📷 Add photo<input type="file" accept="image/*" multiple style="display:none;" data-coindex="' + idx + '" class="co-photo-input" /></label>' +
+          '</div>' +
+          '<div id="co-photo-preview-' + idx + '" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"></div>' +
+        '</div>' +
       '</div>';
     }).join('');
 
@@ -821,13 +864,30 @@
     document.getElementById('checkout-save-btn').textContent = 'Add All to Inventory';
     document.getElementById('checkout-modal').classList.add('open');
 
-    // Init calendars for each checkout item
+    // Init calendars and photo inputs for each checkout item
     toCheckout.forEach(function(it, idx) {
       const calId = 'co-expiry-' + idx;
       initCheckoutCal(calId);
       document.getElementById('co-btn-' + idx).addEventListener('click', function(e) {
         e.stopPropagation();
         toggleCheckoutCal(e, calId);
+      });
+    });
+
+    // Photo inputs
+    document.querySelectorAll('.co-photo-input').forEach(function(input) {
+      input.addEventListener('change', async function() {
+        const idx = parseInt(this.dataset.coindex, 10);
+        const preview = document.getElementById('co-photo-preview-' + idx);
+        const files = Array.from(this.files);
+        for (var f of files) {
+          if (!checkoutPhotos[idx]) checkoutPhotos[idx] = [];
+          if (checkoutPhotos[idx].length >= 3) { showToast('Max 3 photos per item.'); break; }
+          const url = await readFileAsDataURL(f);
+          checkoutPhotos[idx].push({ file: f, previewUrl: url });
+        }
+        renderCheckoutPhotoPreview(idx);
+        this.value = '';
       });
     });
   };
@@ -924,18 +984,25 @@
       const it = toCheckout[idx];
       const calId = 'co-expiry-' + idx;
       const expiry = checkoutCals[calId] ? checkoutCals[calId].selected : null;
-      const type = document.getElementById('co-type-' + idx) ? document.getElementById('co-type-' + idx).value : 'food';
+      const type   = document.getElementById('co-type-' + idx) ? document.getElementById('co-type-' + idx).value : 'food';
+      const note   = document.getElementById('co-note-' + idx) ? document.getElementById('co-note-' + idx).value.trim() : (it.note || '');
+      const photos = checkoutPhotos[idx] || [];
       prog.textContent = 'Adding ' + (idx+1) + ' of ' + toCheckout.length + '…';
       try {
+        const photoURLs = [], photoStoragePaths = [];
+        for (var pi = 0; pi < photos.length; pi++) {
+          const path = 'photos/' + currentUser.uid + '/' + Date.now() + '_co_' + idx + '_' + pi;
+          const url  = await uploadPhoto(photos[pi].file, path);
+          photoURLs.push(url); photoStoragePaths.push(path);
+        }
         const docRef = await addDoc(collection(db,'items'), {
-          uid: currentUser.uid, name: it.name, type: type, note: it.note || '',
+          uid: currentUser.uid, name: it.name, type: type, note: note,
           qty: it.qty || '', purchase: null, expiry: expiry,
-          photoURLs: [], photoStoragePaths: [], createdAt: Date.now()
+          photoURLs, photoStoragePaths, createdAt: Date.now()
         });
         items.unshift({ docId: docRef.id, uid: currentUser.uid, name: it.name, type: type,
-          note: it.note || '', qty: it.qty || '', purchase: null, expiry: expiry,
-          photoURLs: [], photoStoragePaths: [], createdAt: Date.now() });
-        // Mark as added in shopping list
+          note: note, qty: it.qty || '', purchase: null, expiry: expiry,
+          photoURLs, photoStoragePaths, createdAt: Date.now() });
         it.addedToInventory = true;
         await updateDoc(doc(db,'shopping',it.docId), { addedToInventory: true });
       } catch(e) {
@@ -1219,7 +1286,7 @@
   window.openAddModal = function() {
     currentType = 'food'; selectType('food');
     document.getElementById('f-name').value = '';
-    document.getElementById('f-qty').value  = '';
+    document.getElementById('f-qty').value  = '1';
     document.getElementById('f-note').value = '';
     clearDate(null,'purchase'); clearDate(null,'expiry');
     ['err-purchase','err-expiry'].forEach(function(id){ var el=document.getElementById(id); if(el){el.classList.remove('visible');} });
@@ -1650,6 +1717,7 @@
   document.getElementById('shop-f-name').addEventListener('keydown', function(e){ if(e.key==='Enter') saveShopItem(); });
 
   // Done shopping / checkout
+  document.getElementById('shop-clear-btn').addEventListener('click', clearAddedShopItems);
   document.getElementById('shop-done-btn').addEventListener('click', openCheckoutModal);
   document.getElementById('checkout-close').addEventListener('click', closeCheckoutModal);
   document.getElementById('checkout-cancel').addEventListener('click', closeCheckoutModal);
