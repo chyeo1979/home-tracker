@@ -347,7 +347,7 @@
       <div class="shop-done-bar">
         <span class="shop-count" id="shop-count">0 items</span>
         <div style="display:flex;gap:8px;">
-          <button class="cancel-btn" id="shop-clear-btn" style="font-size:13px;padding:7px 14px;display:none;">Clear added</button>
+          <button class="cancel-btn" id="shop-clear-btn" style="font-size:13px;padding:7px 14px;display:none;color:var(--accent-dark);border-color:var(--accent);background:var(--accent-bg);">✓ Clear added</button>
           <button class="shop-done-btn" id="shop-done-btn" disabled>Done Shopping</button>
         </div>
       </div>
@@ -820,8 +820,10 @@
     // Build checkout items HTML with individual expiry date pickers
     const html = toCheckout.map(function(it, idx) {
       const calId = 'co-expiry-' + idx;
+      const purCalId = 'co-purchase-' + idx;
       const n = new Date();
-      checkoutCals[calId] = { year: n.getFullYear(), month: n.getMonth(), selected: null, btnId: 'co-btn-' + idx, displayId: 'co-display-' + idx, popupId: 'co-popup-' + idx };
+      checkoutCals[calId]    = { year: n.getFullYear(), month: n.getMonth(), selected: null, btnId: 'co-btn-' + idx,     displayId: 'co-display-' + idx,     popupId: 'co-popup-' + idx };
+      checkoutCals[purCalId] = { year: n.getFullYear(), month: n.getMonth(), selected: null, btnId: 'co-pur-btn-' + idx, displayId: 'co-pur-display-' + idx, popupId: 'co-pur-popup-' + idx };
       return '<div class="checkout-item" data-shopid="' + it.docId + '" data-idx="' + idx + '">' +
         '<div class="checkout-item-header">' +
           '<span class="checkout-item-name">' + it.name + '</span>' +
@@ -835,14 +837,25 @@
               '<option value="household">🏠 Household</option>' +
             '</select>' +
           '</div>' +
-          '<div class="checkout-field">' +
+          '<div class="checkout-field" style="position:relative;">' +
+            '<label>Purchase date <span style="font-weight:400;color:var(--text-secondary)">(optional)</span></label>' +
+            '<button class="date-input-btn" id="co-pur-btn-' + idx + '" style="font-size:13px;padding:7px 9px;">' +
+              '<span id="co-pur-display-' + idx + '" class="placeholder" style="font-size:13px;">Select date</span>' +
+              '<span class="cal-icon">📅</span>' +
+            '</button>' +
+            '<div class="cal-popup" id="co-pur-popup-' + idx + '" style="position:absolute;top:100%;left:0;z-index:700;"></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="checkout-fields" style="margin-top:8px;">' +
+          '<div class="checkout-field" style="position:relative;">' +
             '<label>Expiry date <span style="font-weight:400;color:var(--text-secondary)">(optional)</span></label>' +
-            '<button class="date-input-btn" id="co-btn-' + idx + '" style="font-size:13px;padding:7px 9px;" data-calid="' + calId + '">' +
+            '<button class="date-input-btn" id="co-btn-' + idx + '" style="font-size:13px;padding:7px 9px;">' +
               '<span id="co-display-' + idx + '" class="placeholder" style="font-size:13px;">Select date</span>' +
               '<span class="cal-icon">📅</span>' +
             '</button>' +
-            '<div class="cal-popup" id="co-popup-' + idx + '"></div>' +
+            '<div class="cal-popup" id="co-popup-' + idx + '" style="position:absolute;top:100%;left:0;z-index:700;"></div>' +
           '</div>' +
+          '<div class="checkout-field"></div>' +
         '</div>' +
         '<div class="checkout-field" style="margin-top:8px;">' +
           '<label>Note <span style="font-weight:400;color:var(--text-secondary)">(optional)</span></label>' +
@@ -866,11 +879,15 @@
 
     // Init calendars and photo inputs for each checkout item
     toCheckout.forEach(function(it, idx) {
-      const calId = 'co-expiry-' + idx;
+      const calId    = 'co-expiry-' + idx;
+      const purCalId = 'co-purchase-' + idx;
       initCheckoutCal(calId);
+      initCheckoutCal(purCalId);
       document.getElementById('co-btn-' + idx).addEventListener('click', function(e) {
-        e.stopPropagation();
-        toggleCheckoutCal(e, calId);
+        e.stopPropagation(); toggleCheckoutCal(e, calId);
+      });
+      document.getElementById('co-pur-btn-' + idx).addEventListener('click', function(e) {
+        e.stopPropagation(); toggleCheckoutCal(e, purCalId);
       });
     });
 
@@ -954,17 +971,30 @@
     const popup = document.getElementById(state.popupId);
     const btn   = document.getElementById(state.btnId);
     const isOpen = popup.classList.contains('open');
-    // close all cals first
     document.querySelectorAll('.cal-popup.open').forEach(function(p){ p.classList.remove('open'); });
     document.querySelectorAll('.date-input-btn.open').forEach(function(b){ b.classList.remove('open'); });
     if (!isOpen) {
       renderCheckoutCal(calId);
       popup.classList.add('open');
       btn.classList.add('open');
-      // position popup
+      // Use position:absolute relative to parent — avoids off-screen on mobile
+      popup.style.top  = '';
+      popup.style.left = '';
+      popup.style.right = '';
+      // If near bottom of modal, open upward
       const rect = btn.getBoundingClientRect();
-      popup.style.top  = (rect.bottom + window.scrollY + 4) + 'px';
-      popup.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
+      const spaceBelow = window.innerHeight - rect.bottom;
+      if (spaceBelow < 320) {
+        popup.style.bottom = '100%';
+        popup.style.top = 'auto';
+      } else {
+        popup.style.top = '100%';
+        popup.style.bottom = 'auto';
+      }
+      // Clamp to not overflow right edge
+      popup.style.left = '0';
+      popup.style.right = 'auto';
+      popup.style.maxWidth = '100%';
     }
   }
 
@@ -982,11 +1012,13 @@
     const failed = [];
     for (var idx = 0; idx < toCheckout.length; idx++) {
       const it = toCheckout[idx];
-      const calId = 'co-expiry-' + idx;
-      const expiry = checkoutCals[calId] ? checkoutCals[calId].selected : null;
-      const type   = document.getElementById('co-type-' + idx) ? document.getElementById('co-type-' + idx).value : 'food';
-      const note   = document.getElementById('co-note-' + idx) ? document.getElementById('co-note-' + idx).value.trim() : (it.note || '');
-      const photos = checkoutPhotos[idx] || [];
+      const calId    = 'co-expiry-' + idx;
+      const purCalId = 'co-purchase-' + idx;
+      const expiry   = checkoutCals[calId]    ? checkoutCals[calId].selected    : null;
+      const purchase = checkoutCals[purCalId] ? checkoutCals[purCalId].selected : null;
+      const type     = document.getElementById('co-type-' + idx) ? document.getElementById('co-type-' + idx).value : 'food';
+      const note     = document.getElementById('co-note-' + idx) ? document.getElementById('co-note-' + idx).value.trim() : (it.note || '');
+      const photos   = checkoutPhotos[idx] || [];
       prog.textContent = 'Adding ' + (idx+1) + ' of ' + toCheckout.length + '…';
       try {
         const photoURLs = [], photoStoragePaths = [];
@@ -997,11 +1029,11 @@
         }
         const docRef = await addDoc(collection(db,'items'), {
           uid: currentUser.uid, name: it.name, type: type, note: note,
-          qty: it.qty || '', purchase: null, expiry: expiry,
+          qty: it.qty || '', purchase: purchase, expiry: expiry,
           photoURLs, photoStoragePaths, createdAt: Date.now()
         });
         items.unshift({ docId: docRef.id, uid: currentUser.uid, name: it.name, type: type,
-          note: note, qty: it.qty || '', purchase: null, expiry: expiry,
+          note: note, qty: it.qty || '', purchase: purchase, expiry: expiry,
           photoURLs, photoStoragePaths, createdAt: Date.now() });
         it.addedToInventory = true;
         await updateDoc(doc(db,'shopping',it.docId), { addedToInventory: true });
